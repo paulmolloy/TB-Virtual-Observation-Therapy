@@ -9,3 +9,7 @@
 /build
 /captures
 .externalNativeBuild
+
+# Ignore the OpenCV build files
+/openCVLibrary343/build
+/test.txt
