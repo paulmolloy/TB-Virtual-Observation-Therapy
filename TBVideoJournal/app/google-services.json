@@ -1,0 +1,42 @@
+{
+  "project_info": {
+    "project_number": "80680232908",
+    "firebase_url": "https://tb-vot.firebaseio.com",
+    "project_id": "tb-vot",
+    "storage_bucket": "tb-vot.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:80680232908:android:e954dadbf7c4155b",
+        "android_client_info": {
+          "package_name": "ie.tcd.paulm.tbvideojournal"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "80680232908-0n537hqhkkjvnl1majem4l4i5crn0280.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAYzUhKz1Sn9g338LQVRGlB5i-jP6CUDwY"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 1,
+          "other_platform_oauth_client": []
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
