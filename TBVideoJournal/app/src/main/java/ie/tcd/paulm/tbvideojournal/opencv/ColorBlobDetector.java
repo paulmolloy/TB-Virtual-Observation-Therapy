@@ -1,4 +1,4 @@
-package ie.tcd.paulm.tbvideojournal;
+package ie.tcd.paulm.tbvideojournal.opencv;
 
 import java.util.ArrayList;
 import java.util.Iterator;

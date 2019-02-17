@@ -10,9 +10,9 @@ export const addNurse = functions.https.onRequest(async (request, response) => {
 
         let { name, email, password } = request.query
 
-        await firebase().auth().createUser({ email, password })
+        let user = await firebase().auth().createUser({ email, password })
 
-        let nurse = await fs().collection("nurses").add({ name, email })
+        await fs().doc("nurses/" + user.uid).set({ name, email })
 
         respond(
             response,
@@ -21,7 +21,7 @@ export const addNurse = functions.https.onRequest(async (request, response) => {
             <p>Name: ${name}</p>
             <p>Email: ${email}</p>
             <p>Password: ${password}</p>
-            <p>ID: ${nurse.id}</p>`
+            <p>ID: ${user.uid}</p>`
         )
         return "ok"
 
@@ -43,9 +43,9 @@ export const addPatient = functions.https.onRequest(async (request, response) =>
 
         let { name, email, nurseID, password } = request.query
 
-        await firebase().auth().createUser({ email, password })
+        let user = await firebase().auth().createUser({ email, password })
 
-        let patient = await fs().collection("patients").add({ name, email, nurseID })
+        await fs().doc("patients/" + user.uid).set({ name, email, nurseID })
 
         respond(
             response,
@@ -55,7 +55,7 @@ export const addPatient = functions.https.onRequest(async (request, response) =>
             <p>Email: ${email}</p>
             <p>Password: ${password}</p>
             <p>NurseID: ${nurseID}</p>
-            <p>PatientID: ${patient.id}</p>`
+            <p>PatientID: ${user.uid}</p>`
         )
         return "ok"
 
