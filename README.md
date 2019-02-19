@@ -4,6 +4,7 @@ Paul
 Neasa
 Edvardas
 Aoife
+Dan
 
 # Database
 See roughly what the database looks like [here](./Documentation/DatabaseSpec.md)
