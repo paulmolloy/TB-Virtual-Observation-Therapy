@@ -7,13 +7,21 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.EditText;
+import android.widget.TextView;
 
 import ie.tcd.paulm.tbvideojournal.MainActivity;
 import ie.tcd.paulm.tbvideojournal.R;
 import ie.tcd.paulm.tbvideojournal.mainmenu.MainMenuFragment;
 import ie.tcd.paulm.tbvideojournal.misc.Misc;
 
+
 public class SignInFragment extends Fragment {
+
+    private EditText LoginEmail;
+    private EditText Password;
+    private TextView Attempts;
+    private Button Login;
 
     public SignInFragment() { }
 
@@ -26,6 +34,13 @@ public class SignInFragment extends Fragment {
         peter.setOnClickListener(b -> signIn("peter.mc.patient@email.com", "Password123"));
 
         return view;
+
+        LoginEmail = (EditText)findViewById(R.id.emailEdtTxt);
+        Password = (EditText)findViewById(R.id.passwordEdtTxt);
+        Attempts = (TextView)findViewById(R.id.attemptsTxtView);
+        Login = (Button)findViewById(R.id.loginBtn);
+
+
 
     }
 
@@ -40,5 +55,6 @@ public class SignInFragment extends Fragment {
     private MainActivity getRoot(){
         return (MainActivity) getActivity();
     }
+
 
 }
