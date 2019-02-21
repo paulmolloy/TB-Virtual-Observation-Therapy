@@ -1,9 +1,14 @@
 import logging
+import os
 
 from flask import Flask
+from flask import jsonify
+from flask import request
 
+from users import users_blueprint
 
 app = Flask(__name__)
+app.register_blueprint(users_blueprint)
 
 
 @app.route('/')
