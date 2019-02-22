@@ -28,6 +28,8 @@ import static android.support.constraint.Constraints.TAG;
 
 public class FaceDetector extends Fragment implements CameraBridgeViewBase.CvCameraViewListener2 {
 
+    private static final String  TAG              = "FaceCamera";
+
     private CameraBridgeViewBase mOpenCvCameraView;
     private CascadeClassifier cascadeClassifier;
     private Mat grayscaleImage;
@@ -132,6 +134,12 @@ public class FaceDetector extends Fragment implements CameraBridgeViewBase.CvCam
     @Override
     public void onResume() {
         super.onResume();
-        OpenCVLoader.initAsync(OpenCVLoader.OPENCV_VERSION_2_4_6, getContext(), mLoaderCallback);
+        if (!OpenCVLoader.initDebug()) {
+            Log.d(TAG, "Internal OpenCV library not found. Using OpenCV Manager for initialization");
+            OpenCVLoader.initAsync(OpenCVLoader.OPENCV_VERSION_3_0_0, getContext(), mLoaderCallback);
+        } else {
+            Log.d(TAG, "OpenCV library found inside package. Using it!");
+            mLoaderCallback.onManagerConnected(LoaderCallbackInterface.SUCCESS);
+        }
     }
 }

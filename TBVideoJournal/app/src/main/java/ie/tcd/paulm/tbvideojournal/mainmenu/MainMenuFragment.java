@@ -29,6 +29,9 @@ public class MainMenuFragment extends Fragment {
         Button recordButton = view.findViewById(R.id.MainMenu_record);
         recordButton.setOnClickListener(b -> getRoot().showCameraScreen());
 
+        Button faceButton = view.findViewById(R.id.MainMenu_face);
+        faceButton.setOnClickListener(b -> getRoot().showFaceScreen());
+
         Button signOutButton = view.findViewById(R.id.MainMenu_signOut);
         signOutButton.setOnClickListener(b -> {
             Auth.signOut();
