@@ -34,7 +34,12 @@ public class FaceDetector extends Fragment implements CameraBridgeViewBase.CvCam
     private CascadeClassifier cascadeClassifier;
     private Mat grayscaleImage;
     private Mat colorImage;
+    private Mat rotatedColorImage;
     private int absoluteFaceSize;
+    private Mat mRgba;
+    private Mat mRgbaF;
+    private Mat mRgbaT;
+
 
     private BaseLoaderCallback mLoaderCallback = new BaseLoaderCallback(getContext()) {
         @Override
@@ -76,6 +81,7 @@ public class FaceDetector extends Fragment implements CameraBridgeViewBase.CvCam
         }
 
         // And we are ready to go
+        mOpenCvCameraView.setCameraIndex(1);
         mOpenCvCameraView.enableView();
     }
 
@@ -99,6 +105,12 @@ public class FaceDetector extends Fragment implements CameraBridgeViewBase.CvCam
     @Override
     public void onCameraViewStarted(int width, int height) {
         grayscaleImage = new Mat(height, width, CvType.CV_8UC4);
+        mRgba = new Mat(height, width, CvType.CV_8UC4);
+        mRgbaF = new Mat(height, width, CvType.CV_8UC4);
+        mRgbaT = new Mat(width, width, CvType.CV_8UC4);
+        rotatedColorImage = new Mat(width, width, CvType.CV_8UC4);
+
+
 
         // The faces will be a 20% of the height of the screen
         absoluteFaceSize = (int) (height * 0.2);
@@ -106,7 +118,8 @@ public class FaceDetector extends Fragment implements CameraBridgeViewBase.CvCam
 
     @Override
     public void onCameraViewStopped() {
-            colorImage.release();
+            // colorImage.release();
+            // rotatedColorImage.release();
     }
 
     @Override
@@ -115,11 +128,12 @@ public class FaceDetector extends Fragment implements CameraBridgeViewBase.CvCam
         grayscaleImage = inputFrame.gray();
 
 
+
         MatOfRect faces = new MatOfRect();
 
         // Use the classifier to detect faces
         if (cascadeClassifier != null) {
-            cascadeClassifier.detectMultiScale(grayscaleImage, faces, 1.1, 2, 2,
+            cascadeClassifier.detectMultiScale(grayscaleImage, faces, 1.5, 2, 2,
                     new Size(absoluteFaceSize, absoluteFaceSize), new Size());
         }
 
@@ -142,4 +156,6 @@ public class FaceDetector extends Fragment implements CameraBridgeViewBase.CvCam
             mLoaderCallback.onManagerConnected(LoaderCallbackInterface.SUCCESS);
         }
     }
+
+
 }

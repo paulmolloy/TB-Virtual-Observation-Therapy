@@ -1,12 +1,5 @@
 package org.opencv.android;
 
-import java.util.List;
-
-import org.opencv.BuildConfig;
-import org.opencv.R;
-import org.opencv.core.Mat;
-import org.opencv.core.Size;
-
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
@@ -14,11 +7,20 @@ import android.content.DialogInterface;
 import android.content.res.TypedArray;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
+import android.graphics.Matrix;
 import android.graphics.Rect;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
+
+import org.opencv.R;
+import org.opencv.android.FpsMeter;
+import org.opencv.android.Utils;
+import org.opencv.core.Mat;
+import org.opencv.core.Size;
+
+import java.util.List;
 
 /**
  * This is a basic class, implementing the interaction with Camera and OpenCV library.
@@ -38,7 +40,7 @@ public abstract class CameraBridgeViewBase extends SurfaceView implements Surfac
     private Bitmap mCacheBitmap;
     private CvCameraViewListener2 mListener;
     private boolean mSurfaceExist;
-    private final Object mSyncObject = new Object();
+    private Object mSyncObject = new Object();
 
     protected int mFrameWidth;
     protected int mFrameHeight;
@@ -74,12 +76,16 @@ public abstract class CameraBridgeViewBase extends SurfaceView implements Surfac
         if (styledAttrs.getBoolean(R.styleable.CameraBridgeViewBase_show_fps, false))
             enableFpsMeter();
 
-        mCameraIndex = styledAttrs.getInt(R.styleable.CameraBridgeViewBase_camera_id, -1);
+        mCameraIndex = styledAttrs.getInt(R.styleable.CameraBridgeViewBase_camera_id, 2);
 
         getHolder().addCallback(this);
         mMaxWidth = MAX_UNSPECIFIED;
         mMaxHeight = MAX_UNSPECIFIED;
         styledAttrs.recycle();
+    }
+
+    public int getCameraIndex() {
+        return this.mCameraIndex;
     }
 
     /**
@@ -150,8 +156,8 @@ public abstract class CameraBridgeViewBase extends SurfaceView implements Surfac
         }
 
         public Mat onCameraFrame(CvCameraViewFrame inputFrame) {
-             Mat result = null;
-             switch (mPreviewFormat) {
+            Mat result = null;
+            switch (mPreviewFormat) {
                 case RGBA:
                     result = mOldStyleListener.onCameraFrame(inputFrame.rgba());
                     break;
@@ -252,7 +258,7 @@ public abstract class CameraBridgeViewBase extends SurfaceView implements Surfac
     }
 
     public void disableFpsMeter() {
-            mFpsMeter = null;
+        mFpsMeter = null;
     }
 
     /**
@@ -317,30 +323,30 @@ public abstract class CameraBridgeViewBase extends SurfaceView implements Surfac
     private void processEnterState(int state) {
         Log.d(TAG, "call processEnterState: " + state);
         switch(state) {
-        case STARTED:
-            onEnterStartedState();
-            if (mListener != null) {
-                mListener.onCameraViewStarted(mFrameWidth, mFrameHeight);
-            }
-            break;
-        case STOPPED:
-            onEnterStoppedState();
-            if (mListener != null) {
-                mListener.onCameraViewStopped();
-            }
-            break;
+            case STARTED:
+                onEnterStartedState();
+                if (mListener != null) {
+                    mListener.onCameraViewStarted(mFrameWidth, mFrameHeight);
+                }
+                break;
+            case STOPPED:
+                onEnterStoppedState();
+                if (mListener != null) {
+                    mListener.onCameraViewStopped();
+                }
+                break;
         };
     }
 
     private void processExitState(int state) {
         Log.d(TAG, "call processExitState: " + state);
         switch(state) {
-        case STARTED:
-            onExitStartedState();
-            break;
-        case STOPPED:
-            onExitStoppedState();
-            break;
+            case STARTED:
+                onExitStartedState();
+                break;
+            case STOPPED:
+                onExitStoppedState();
+                break;
         };
     }
 
@@ -410,21 +416,31 @@ public abstract class CameraBridgeViewBase extends SurfaceView implements Surfac
             Canvas canvas = getHolder().lockCanvas();
             if (canvas != null) {
                 canvas.drawColor(0, android.graphics.PorterDuff.Mode.CLEAR);
-                if (BuildConfig.DEBUG)
-                    Log.d(TAG, "mStretch value: " + mScale);
+
+                Log.d(TAG, String.format("scale: %f, canvas width x height: %d x %d, bitmap width x height:%d x %d ", mScale, canvas.getWidth(), canvas.getHeight(), mCacheBitmap.getWidth(), mCacheBitmap.getHeight()));
+
+                // duddns: Rotate image
+                float degrees = 270f; // for Back Camera
+                if (CAMERA_ID_FRONT == mCameraIndex) {
+                    degrees = 270f; // for Front Camera
+                }
+
+                Matrix matrix = new Matrix();
+                matrix.postRotate(degrees);
+                Bitmap bitmap = Bitmap.createBitmap(mCacheBitmap, 0, 0, mCacheBitmap.getWidth(), mCacheBitmap.getHeight(), matrix, true);
 
                 if (mScale != 0) {
-                    canvas.drawBitmap(mCacheBitmap, new Rect(0,0,mCacheBitmap.getWidth(), mCacheBitmap.getHeight()),
-                         new Rect((int)((canvas.getWidth() - mScale*mCacheBitmap.getWidth()) / 2),
-                         (int)((canvas.getHeight() - mScale*mCacheBitmap.getHeight()) / 2),
-                         (int)((canvas.getWidth() - mScale*mCacheBitmap.getWidth()) / 2 + mScale*mCacheBitmap.getWidth()),
-                         (int)((canvas.getHeight() - mScale*mCacheBitmap.getHeight()) / 2 + mScale*mCacheBitmap.getHeight())), null);
+                    canvas.drawBitmap(bitmap, new Rect(0,0,bitmap.getWidth(), bitmap.getHeight()),
+                            new Rect((int)((canvas.getWidth() - mScale*bitmap.getWidth()) / 2),
+                                    (int)((canvas.getHeight() - mScale*bitmap.getHeight()) / 2),
+                                    (int)((canvas.getWidth() - mScale*bitmap.getWidth()) / 2 + mScale*bitmap.getWidth()),
+                                    (int)((canvas.getHeight() - mScale*bitmap.getHeight()) / 2 + mScale*bitmap.getHeight())), null);
                 } else {
-                     canvas.drawBitmap(mCacheBitmap, new Rect(0,0,mCacheBitmap.getWidth(), mCacheBitmap.getHeight()),
-                         new Rect((canvas.getWidth() - mCacheBitmap.getWidth()) / 2,
-                         (canvas.getHeight() - mCacheBitmap.getHeight()) / 2,
-                         (canvas.getWidth() - mCacheBitmap.getWidth()) / 2 + mCacheBitmap.getWidth(),
-                         (canvas.getHeight() - mCacheBitmap.getHeight()) / 2 + mCacheBitmap.getHeight()), null);
+                    canvas.drawBitmap(bitmap, new Rect(0, 0, bitmap.getWidth(), bitmap.getHeight()),
+                            new Rect((canvas.getWidth() - bitmap.getWidth()) / 2,
+                                    (canvas.getHeight() - bitmap.getHeight()) / 2,
+                                    (canvas.getWidth() - bitmap.getWidth()) / 2 + bitmap.getWidth(),
+                                    (canvas.getHeight() - bitmap.getHeight()) / 2 + bitmap.getHeight()), null);
                 }
 
                 if (mFpsMeter != null) {
@@ -451,7 +467,7 @@ public abstract class CameraBridgeViewBase extends SurfaceView implements Surfac
      */
     protected abstract void disconnectCamera();
 
-    // NOTE: On Android 4.1.x the function must be called before SurfaceTexture constructor!
+    // NOTE: On Android 4.1.x the function must be called before SurfaceTextre constructor!
     protected void AllocateCache()
     {
         mCacheBitmap = Bitmap.createBitmap(mFrameWidth, mFrameHeight, Bitmap.Config.ARGB_8888);
