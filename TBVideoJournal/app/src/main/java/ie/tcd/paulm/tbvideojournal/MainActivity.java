@@ -9,6 +9,7 @@ import ie.tcd.paulm.tbvideojournal.auth.Auth;
 import ie.tcd.paulm.tbvideojournal.auth.SignInFragment;
 import ie.tcd.paulm.tbvideojournal.mainmenu.MainMenuFragment;
 import ie.tcd.paulm.tbvideojournal.opencv.CameraFragment;
+import ie.tcd.paulm.tbvideojournal.opencv.FaceDetector;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -53,6 +54,9 @@ public class MainActivity extends AppCompatActivity {
 
     public void showCameraScreen(){
         showFragment(new CameraFragment(), "Camera");
+    }
+    public void showFaceScreen(){
+        showFragment(new FaceDetector(), "FaceCamera");
     }
 
     /**
