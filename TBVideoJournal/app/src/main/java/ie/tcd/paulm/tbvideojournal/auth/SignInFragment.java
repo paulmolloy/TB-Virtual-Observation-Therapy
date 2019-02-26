@@ -18,9 +18,9 @@ import ie.tcd.paulm.tbvideojournal.misc.Misc;
 
 public class SignInFragment extends Fragment {
 
-    private EditText LoginEmail;
+    private EditText Email;
     private EditText Password;
-    private TextView Attempts;
+    //private TextView Attempts;
     private Button Login;
 
     public SignInFragment() { }
@@ -30,25 +30,22 @@ public class SignInFragment extends Fragment {
 
         View view = inflater.inflate(R.layout.fragment_sign_in, container, false);
 
-        Button peter = view.findViewById(R.id.SignIn_peterButton);
-        peter.setOnClickListener(b -> signIn("peter.mc.patient@email.com", "Password123"));
+        Email = (EditText) view.findViewById(R.id.emailEdtTxt);
+        Password = (EditText) view.findViewById(R.id.passwordEdtTxt);
+        //Attempts = (TextView) view.findViewById(R.id.attemptsTxtView);
+        Login = (Button) view.findViewById(R.id.loginBtn);
+        String email = Email.getText().toString();
+        String password = Password.getText().toString();
+        Login.setOnClickListener(button -> signIn(email, password));
 
         return view;
-
-        LoginEmail = (EditText)findViewById(R.id.emailEdtTxt);
-        Password = (EditText)findViewById(R.id.passwordEdtTxt);
-        Attempts = (TextView)findViewById(R.id.attemptsTxtView);
-        Login = (Button)findViewById(R.id.loginBtn);
-
-
-
     }
 
     private void signIn(String email, String password){
 
-        Auth.signIn("peter.mc.patient@email.com", "Password123")
-            .addOnSuccessListener(r -> getRoot().showMainMenuScreen(true))
-            .addOnFailureListener(e -> Misc.toast("Something went wrong", getContext()));
+        Auth.signIn(email, password)
+            .addOnSuccessListener(result -> getRoot().showMainMenuScreen(true))
+            .addOnFailureListener(error -> Misc.toast("Something went wrong", getContext()));
 
     }
 
