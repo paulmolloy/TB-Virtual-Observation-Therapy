@@ -40,6 +40,18 @@
         />
 
     <Button
+        android:id="@+id/MainMenu_face"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:text="Detect face test"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.682" />
+
+    <Button
         android:id="@+id/MainMenu_signOut"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
