@@ -38,12 +38,9 @@ public class SignInFragment extends Fragment {
             String email = Email.getText().toString();
             String password = Password.getText().toString();
             signIn(email, password);
-<<<<<<< HEAD
-        });
-=======
-        }
+                }
         );
->>>>>>> cde75ec130fe9e27baacf9a42a08d0c00cdf882a
+
 
         return view;
     }
