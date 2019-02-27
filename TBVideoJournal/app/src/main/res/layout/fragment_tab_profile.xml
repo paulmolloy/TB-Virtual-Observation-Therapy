@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
-<android.support.constraint.ConstraintLayout
+<RelativeLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
@@ -10,9 +11,39 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_centerInParent="true"
-        android:text="Tab 1"
         android:textAppearance="?android:attr/textAppearanceLarge"
         tools:layout_editor_absoluteX="0dp"
         tools:layout_editor_absoluteY="4dp" />
 
-</android.support.constraint.ConstraintLayout>
+    <TextView
+        android:id="@+id/MainMenu_name"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="72dp"
+        android:text="Welcome back ..."
+        android:textSize="20dp"
+        android:layout_centerHorizontal="true"
+
+        />
+
+    <TextView
+        android:id="@+id/MainMenu_nurse"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Your nurse is ..."
+        android:layout_centerHorizontal="true"
+        android:layout_below="@id/MainMenu_name"
+        />
+
+    <Button
+        android:id="@+id/MainMenu_signOut"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerHorizontal="true"
+        android:layout_marginBottom="8dp"
+        android:layout_alignParentBottom="true"
+        android:text="Sign out"
+
+        />
+
+</RelativeLayout >
