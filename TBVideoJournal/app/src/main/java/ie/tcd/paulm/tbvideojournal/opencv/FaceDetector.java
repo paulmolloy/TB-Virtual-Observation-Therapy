@@ -33,6 +33,7 @@ public class FaceDetector extends Fragment implements CameraBridgeViewBase.CvCam
     private CameraBridgeViewBase mOpenCvCameraView;
     private CascadeClassifier cascadeClassifier;
     private Mat grayscaleImage;
+    private Mat grayscaleImageRot;
     private Mat colorImage;
     private Mat rotatedColorImage;
     private int absoluteFaceSize;
@@ -109,6 +110,8 @@ public class FaceDetector extends Fragment implements CameraBridgeViewBase.CvCam
         mRgbaF = new Mat(height, width, CvType.CV_8UC4);
         mRgbaT = new Mat(width, width, CvType.CV_8UC4);
         rotatedColorImage = new Mat(width, width, CvType.CV_8UC4);
+        grayscaleImageRot= new Mat(width, width, CvType.CV_8UC4);
+
 
 
 
@@ -130,18 +133,29 @@ public class FaceDetector extends Fragment implements CameraBridgeViewBase.CvCam
 
 
         MatOfRect faces = new MatOfRect();
-
+        // Model is trained on 90 sideways photos so need to rotate image back and forth after
+        // to classify.
+        // Rotate mRgba 90 degrees
+        Core.transpose(grayscaleImage, mRgbaT);
+        Imgproc.resize(mRgbaT, mRgbaF, mRgbaF.size(), 0,0, 0);
+        Core.flip(mRgbaF, grayscaleImageRot,  0 ); // both vertical top bottom
         // Use the classifier to detect faces
         if (cascadeClassifier != null) {
-            cascadeClassifier.detectMultiScale(grayscaleImage, faces, 1.5, 2, 2,
+            cascadeClassifier.detectMultiScale(grayscaleImageRot, faces, 1.5, 2, 2,
                     new Size(absoluteFaceSize, absoluteFaceSize), new Size());
         }
 
+
         // If there are any faces found, draw a rectangle around it
         Rect[] facesArray = faces.toArray();
-        for (int i = 0; i <facesArray.length; i++)
-            Imgproc.rectangle(colorImage, facesArray[i].tl(), facesArray[i].br(), new Scalar(0, 255, 0, 255), 3);
+        for (int i = 0; i <facesArray.length; i++) {
+            Rect recRot = new Rect(facesArray[i].width- facesArray[i].y,facesArray[i].x,
+                    facesArray[i].height, facesArray[i].width);
+            Imgproc.rectangle(colorImage, recRot.br(), recRot.tl(), new Scalar(0, 255, 0, 255), 3);
 
+            //Imgproc.rectangle(colorImage, facesArray[i].br(), facesArray[i].tl(), new Scalar(0, 255, 0, 255), 3);
+
+        }
         return colorImage;
     }
 
