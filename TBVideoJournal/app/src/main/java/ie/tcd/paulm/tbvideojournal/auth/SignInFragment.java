@@ -34,9 +34,11 @@ public class SignInFragment extends Fragment {
         Password = (EditText) view.findViewById(R.id.passwordEdtTxt);
         //Attempts = (TextView) view.findViewById(R.id.attemptsTxtView);
         Login = (Button) view.findViewById(R.id.loginBtn);
-        String email = Email.getText().toString();
-        String password = Password.getText().toString();
-        Login.setOnClickListener(button -> signIn(email, password));
+        Login.setOnClickListener(button -> {
+            String email = Email.getText().toString();
+            String password = Password.getText().toString();
+            signIn(email, password);
+        });
 
         return view;
     }

@@ -2,68 +2,56 @@ package ie.tcd.paulm.tbvideojournal.mainmenu;
 
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
+import android.support.v4.view.ViewPager;
+import android.support.v7.app.AppCompatActivity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
-import android.widget.TextView;
+import android.support.v7.widget.Toolbar;
+import android.support.design.widget.TabLayout;
 
 import ie.tcd.paulm.tbvideojournal.MainActivity;
 import ie.tcd.paulm.tbvideojournal.R;
-import ie.tcd.paulm.tbvideojournal.auth.Auth;
-import ie.tcd.paulm.tbvideojournal.firestore.FSNurse;
-import ie.tcd.paulm.tbvideojournal.firestore.FSPatient;
-import ie.tcd.paulm.tbvideojournal.misc.Misc;
 
 public class MainMenuFragment extends Fragment {
-
-    TextView patientName, nurseName;
-
     public MainMenuFragment() { }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-
         View view = inflater.inflate(R.layout.fragment_main_menu, container, false);
+        Toolbar toolbar = (Toolbar) view.findViewById(R.id.toolbar);
+        ((AppCompatActivity)getActivity()).setSupportActionBar(toolbar);
 
-        Button recordButton = view.findViewById(R.id.MainMenu_record);
-        recordButton.setOnClickListener(b -> getRoot().showCameraScreen());
+        TabLayout tabLayout = (TabLayout) view.findViewById(R.id.tab_layout);
+        tabLayout.addTab(tabLayout.newTab().setText("Profile"));
+        tabLayout.addTab(tabLayout.newTab().setText("Record"));
+        tabLayout.addTab(tabLayout.newTab().setText("Diary"));
+        tabLayout.setTabGravity(TabLayout.GRAVITY_FILL);
 
-        Button faceButton = view.findViewById(R.id.MainMenu_face);
-        faceButton.setOnClickListener(b -> getRoot().showFaceScreen());
 
-        Button signOutButton = view.findViewById(R.id.MainMenu_signOut);
-        signOutButton.setOnClickListener(b -> {
-            Auth.signOut();
-            getRoot().showSignInScreen();
+        final ViewPager viewPager = (ViewPager) view.findViewById(R.id.pager);
+        final PagerAdapter adapter = new PagerAdapter
+                (((AppCompatActivity)getActivity()).getSupportFragmentManager(), tabLayout.getTabCount());
+        viewPager.setAdapter(adapter);
+        viewPager.addOnPageChangeListener(new TabLayout.TabLayoutOnPageChangeListener(tabLayout));
+        tabLayout.setOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
+            @Override
+            public void onTabSelected(TabLayout.Tab tab) {
+                viewPager.setCurrentItem(tab.getPosition());
+            }
+
+            @Override
+            public void onTabUnselected(TabLayout.Tab tab) {
+
+            }
+
+            @Override
+            public void onTabReselected(TabLayout.Tab tab) {
+
+            }
         });
 
-        patientName = view.findViewById(R.id.MainMenu_name);
-        nurseName = view.findViewById(R.id.MainMenu_nurse);
-
-        loadFirestoreStuff();
-
         return view;
-
-    }
-
-    private void loadFirestoreStuff(){
-
-        FSPatient.download(
-            Auth.getCurrentUserID(),
-            patientData -> {
-
-                patientName.setText("Welcome back " + patientData.name);
-
-                FSNurse.download(
-                    patientData.nurseID,
-                    nurseData -> nurseName.setText("Your nurse is " + nurseData.name),
-                    error -> nurseName.setText(error)
-                );
-
-            },
-            error -> patientName.setText(error)
-        );
 
     }
 
