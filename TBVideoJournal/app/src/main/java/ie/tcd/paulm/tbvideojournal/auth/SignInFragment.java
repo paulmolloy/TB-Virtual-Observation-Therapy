@@ -38,9 +38,7 @@ public class SignInFragment extends Fragment {
             String email = Email.getText().toString();
             String password = Password.getText().toString();
             signIn(email, password);
-                }
-        );
-
+        });
 
         return view;
     }

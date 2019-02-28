@@ -12,6 +12,8 @@ import android.view.SurfaceView;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
+import android.widget.RelativeLayout;
+
 import org.opencv.android.*;
 import org.opencv.android.CameraBridgeViewBase.CvCameraViewListener;
 import org.opencv.core.*;
@@ -22,7 +24,9 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 
+import ie.tcd.paulm.tbvideojournal.MainActivity;
 import ie.tcd.paulm.tbvideojournal.R;
+import ie.tcd.paulm.tbvideojournal.steps.PillIntakeSteps;
 
 import static android.support.constraint.Constraints.TAG;
 
@@ -99,6 +103,8 @@ public class FaceDetector extends Fragment implements CameraBridgeViewBase.CvCam
         mOpenCvCameraView = view.findViewById(R.id.color_blob_detection_activity_surface_view);
         mOpenCvCameraView.setVisibility(SurfaceView.VISIBLE);
         mOpenCvCameraView.setCvCameraViewListener(this);
+
+        new PillIntakeSteps((MainActivity)getActivity(), (RelativeLayout)view);
 
         return view;
     }
