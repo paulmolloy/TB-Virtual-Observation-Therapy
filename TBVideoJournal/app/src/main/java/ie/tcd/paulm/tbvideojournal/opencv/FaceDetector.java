@@ -4,7 +4,10 @@ package ie.tcd.paulm.tbvideojournal.opencv;
 
 import android.app.Activity;
 import android.content.Context;
+import android.graphics.Bitmap;
+import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Environment;
 import android.support.v4.app.Fragment;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -14,6 +17,16 @@ import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.widget.RelativeLayout;
 
+import org.jcodec.api.android.AndroidSequenceEncoder;
+import org.jcodec.codecs.h264.H264Encoder;
+import org.jcodec.common.TrackType;
+import org.jcodec.common.io.FileChannelWrapper;
+import org.jcodec.common.io.NIOUtils;
+import org.jcodec.common.model.ColorSpace;
+import org.jcodec.common.model.Picture;
+import org.jcodec.common.model.Rational;
+import org.jcodec.containers.mp4.Brand;
+import org.jcodec.containers.mp4.muxer.MP4Muxer;
 import org.opencv.android.*;
 import org.opencv.android.CameraBridgeViewBase.CvCameraViewListener;
 import org.opencv.core.*;
@@ -23,6 +36,7 @@ import org.opencv.objdetect.CascadeClassifier;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
+import java.nio.ByteBuffer;
 
 import ie.tcd.paulm.tbvideojournal.MainActivity;
 import ie.tcd.paulm.tbvideojournal.R;
@@ -30,6 +44,7 @@ import ie.tcd.paulm.tbvideojournal.misc.Misc;
 import ie.tcd.paulm.tbvideojournal.steps.PillIntakeSteps;
 
 import static android.support.constraint.Constraints.TAG;
+import static org.jcodec.common.model.ColorSpace.RGB;
 
 public class FaceDetector extends Fragment implements CameraBridgeViewBase.CvCameraViewListener2 {
 
@@ -45,6 +60,9 @@ public class FaceDetector extends Fragment implements CameraBridgeViewBase.CvCam
     private Mat mRgba;
     private Mat mRgbaF;
     private Mat mRgbaT;
+    private FileChannelWrapper out;
+    private File videoFile;
+    private AndroidSequenceEncoder encoder;
 
 
     private BaseLoaderCallback mLoaderCallback = new BaseLoaderCallback(getContext()) {
@@ -110,7 +128,25 @@ public class FaceDetector extends Fragment implements CameraBridgeViewBase.CvCam
         steps.onAllPillsTaken(() -> Misc.toast("All pills taken! (Will add UI for this in a bit)", getContext()));
         steps.onStepChanged((step, pill) -> Misc.toast("Now on pill " + pill + ", step " + step, getContext(), true));
 
+        String filePath= getContext().getFilesDir().getPath();
+        videoFile = new File(filePath);
+
+        if (!videoFile.exists()){
+            videoFile.mkdirs();
+        }
+
+        try {
+            out = NIOUtils.writableFileChannel(videoFile.getAbsolutePath() + "test.mp4");
+            encoder = new AndroidSequenceEncoder(out, Rational.R(15, 1));
+        }catch(Exception e ) {
+            Log.e(TAG, "Exception occured encoding video");
+        } finally {
+
+            NIOUtils.closeQuietly(out);
+        }
         return view;
+
+
     }
 
     @Override
@@ -133,6 +169,16 @@ public class FaceDetector extends Fragment implements CameraBridgeViewBase.CvCam
     public void onCameraViewStopped() {
             // colorImage.release();
             // rotatedColorImage.release();
+        // Close video encoding.
+        try {
+            encoder.finish();
+        }catch(Exception e ) {
+            Log.e(TAG, "Exception occured encoding video");
+        } finally {
+            NIOUtils.closeQuietly(out);
+        }
+
+
     }
 
     @Override
@@ -166,6 +212,27 @@ public class FaceDetector extends Fragment implements CameraBridgeViewBase.CvCam
             //Imgproc.rectangle(colorImage, facesArray[i].br(), facesArray[i].tl(), new Scalar(0, 255, 0, 255), 3);
 
         }
+
+
+
+
+        // Do video encoding on a background thread to avoid lag.
+        // TODO(pmolloy): Group frames to limit the number of asynctasks.
+        AsyncTask.execute(new Runnable() {
+            @Override
+            public void run() {
+                // Save frame to video.
+                try {
+                    encoder.encodeImage(matToBitmap(colorImage));
+                }catch(Exception e ) {
+                    Log.e(TAG, "Exception occured encoding video");
+                } finally {
+                    NIOUtils.closeQuietly(out);
+                }
+            }
+        });
+
+
         return colorImage;
     }
 
@@ -181,5 +248,16 @@ public class FaceDetector extends Fragment implements CameraBridgeViewBase.CvCam
         }
     }
 
+    private Bitmap matToBitmap(Mat mat){
+        Bitmap bitmap = Bitmap.createBitmap(mOpenCvCameraView.getWidth()/4,mOpenCvCameraView.getHeight()/4, Bitmap.Config.ARGB_8888);
+        try {
+            bitmap = Bitmap.createBitmap(mat.cols(), mat.rows(), Bitmap.Config.ARGB_8888);
+            Utils.matToBitmap(mat, bitmap);
+
+        }catch(Exception e){
+            Log.e(TAG, "Exception converting mat to bitmap: " + e);
+        }
+        return bitmap;
+    }
 
 }
