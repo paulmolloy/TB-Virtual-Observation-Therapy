@@ -26,6 +26,7 @@ import java.io.InputStream;
 
 import ie.tcd.paulm.tbvideojournal.MainActivity;
 import ie.tcd.paulm.tbvideojournal.R;
+import ie.tcd.paulm.tbvideojournal.misc.Misc;
 import ie.tcd.paulm.tbvideojournal.steps.PillIntakeSteps;
 
 import static android.support.constraint.Constraints.TAG;
@@ -104,7 +105,10 @@ public class FaceDetector extends Fragment implements CameraBridgeViewBase.CvCam
         mOpenCvCameraView.setVisibility(SurfaceView.VISIBLE);
         mOpenCvCameraView.setCvCameraViewListener(this);
 
-        new PillIntakeSteps((MainActivity)getActivity(), (RelativeLayout)view);
+        PillIntakeSteps steps = new PillIntakeSteps((MainActivity)getActivity(), (RelativeLayout)view);
+
+        steps.onAllPillsTaken(() -> Misc.toast("All pills taken! (Will add UI for this in a bit)", getContext()));
+        steps.onStepChanged((step, pill) -> Misc.toast("Now on pill " + pill + ", step " + step, getContext(), true));
 
         return view;
     }

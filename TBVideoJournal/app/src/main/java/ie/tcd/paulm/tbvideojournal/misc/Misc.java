@@ -11,4 +11,9 @@ public class Misc {
         Toast.makeText(context, text, Toast.LENGTH_LONG).show();
     }
 
+    /** Convenience method to show a toast */
+    public static void toast(String text, Context context, boolean shortToast){
+        Toast.makeText(context, text, shortToast ? Toast.LENGTH_SHORT : Toast.LENGTH_LONG).show();
+    }
+
 }

@@ -17,10 +17,15 @@ import ie.tcd.paulm.tbvideojournal.misc.Misc;
 
 public class PillIntakeSteps {
 
+    public int numberOfPillsToTake = 5; // Temporarily setting it to 5. Will load this from Firebase later.
+
     private LayoutPillIntakeStepsBinding bindings;
 
     private MainActivity root;
     private View cameraScreen;
+
+    private OnStepChangedListener onStepChangedListener;
+    private Runnable onAllPillsTakenListener;
 
     public final StepDescription[] stepDescriptions = {
         new StepDescription(0, R.drawable.step_0, "Make sure your face is visible"),
@@ -43,6 +48,16 @@ public class PillIntakeSteps {
         bindings.setCurrentStep(0);
         bindings.setCurrentPill(1);
 
+    }
+
+    /** This will be called every time the user moves on to the next step (i.e. when nextStep() is called) */
+    public void onStepChanged(OnStepChangedListener listener){
+        onStepChangedListener = listener;
+    }
+
+    /** This will be called when the user has taken all the pills they are required to take */
+    public void onAllPillsTaken(Runnable listener){
+        onAllPillsTakenListener = listener;
     }
 
     /**
@@ -91,14 +106,34 @@ public class PillIntakeSteps {
      *     - If currently on pill 8, step 4, moves on to pill 9, step 1
      */
     public void nextStep(){
-        int currentStep = bindings.getCurrentStep() + 1;
 
-        if(currentStep > 4){
-            currentStep = 1;
-            bindings.setCurrentPill(bindings.getCurrentPill() + 1);
+        int currentPill = bindings.getCurrentPill();
+
+        if(currentPill <= numberOfPillsToTake) {
+
+            int currentStep = bindings.getCurrentStep() + 1;
+
+            boolean hasTheCurrentPillBeenTaken = currentStep > 4;
+            if(hasTheCurrentPillBeenTaken) {
+
+                currentStep = 1;
+                currentPill++;
+
+                bindings.setCurrentPill(currentPill);
+
+            }
+
+            bindings.setCurrentStep(currentStep);
+
+            boolean areAllPillsTaken = currentPill > numberOfPillsToTake;
+            if(areAllPillsTaken){
+                if(onAllPillsTakenListener != null) onAllPillsTakenListener.run();
+            } else {
+                if(onStepChangedListener != null) onStepChangedListener.run(currentStep, currentPill);
+            }
+
         }
 
-        bindings.setCurrentStep(currentStep);
     }
 
     public void onNextPressed(View view){
@@ -123,6 +158,10 @@ public class PillIntakeSteps {
     @BindingAdapter("android:src")
     public static void setImageResource(ImageView imageView, int resource){
         imageView.setImageResource(resource);
+    }
+
+    public interface OnStepChangedListener {
+        void run(int stepNumber, int pillNumber);
     }
 
 
