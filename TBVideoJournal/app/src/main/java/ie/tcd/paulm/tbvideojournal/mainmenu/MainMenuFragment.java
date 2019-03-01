@@ -23,9 +23,9 @@ public class MainMenuFragment extends Fragment {
         ((AppCompatActivity)getActivity()).setSupportActionBar(toolbar);
 
         TabLayout tabLayout = (TabLayout) view.findViewById(R.id.tab_layout);
-        tabLayout.addTab(tabLayout.newTab().setText("Profile"));
-        tabLayout.addTab(tabLayout.newTab().setText("Record"));
-        tabLayout.addTab(tabLayout.newTab().setText("Diary"));
+        tabLayout.addTab(tabLayout.newTab().setIcon(R.drawable.profile_icon));
+        tabLayout.addTab(tabLayout.newTab().setIcon(R.drawable.video_icon));
+        tabLayout.addTab(tabLayout.newTab().setIcon(R.drawable.diary_icon));
         tabLayout.setTabGravity(TabLayout.GRAVITY_FILL);
 
 
