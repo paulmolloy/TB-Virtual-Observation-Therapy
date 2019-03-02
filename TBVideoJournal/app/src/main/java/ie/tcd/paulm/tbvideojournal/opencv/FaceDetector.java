@@ -47,6 +47,7 @@ import java.io.InputStream;
 import java.io.PrintWriter;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import ie.tcd.paulm.tbvideojournal.MainActivity;
@@ -77,6 +78,9 @@ public class FaceDetector extends Fragment implements CameraBridgeViewBase.CvCam
     private Boolean finished;
     private List<Bitmap> bitmaps;
     private int frameNum;
+    private FFmpeg ffmpeg;
+    private File dir;
+    private int frameCount;
 
 
     private BaseLoaderCallback mLoaderCallback = new BaseLoaderCallback(getContext()) {
@@ -140,53 +144,23 @@ public class FaceDetector extends Fragment implements CameraBridgeViewBase.CvCam
         PillIntakeSteps steps = new PillIntakeSteps((MainActivity)getActivity(), (RelativeLayout)view);
         bitmaps = new ArrayList<Bitmap>();
 
+        File root = Environment.getExternalStorageDirectory();
+
+        // TODO(paulmolloy) write to apps internal dir.
+        // Setup external /downloads dir for writing to.
+        File dir = new File (root.getAbsolutePath() + "/download");
+        Log.d(TAG, "Full file path: " + dir.getAbsolutePath());
+        dir.mkdirs();
+        frameCount = 0;
+
 
         steps.onAllPillsTaken(() -> {
             Misc.toast("All pills taken! (Will add UI for this in a bit)", getContext());
             finished = true;
-
-            FFmpeg ffmpeg = FFmpeg.getInstance(getContext());
-            try {
-                ffmpeg.loadBinary(new LoadBinaryResponseHandler() {
-
-                    @Override
-                    public void onStart() {}
-
-                    @Override
-                    public void onFailure() {}
-
-                    @Override
-                    public void onSuccess() {}
-
-                    @Override
-                    public void onFinish() {}
-                });
-            } catch (FFmpegNotSupportedException e) {
-                // Handle if FFmpeg is not supported by device
-            }
+            ffmpeg =  FFmpeg.getInstance(getContext());
+            loadFFMpegBinary();
             String[] cmd = new String[]{"-version"};
-            try {
-                // to execute "ffmpeg -version" command you just need to pass "-version"
-                ffmpeg.execute(cmd, new ExecuteBinaryResponseHandler() {
-
-                    @Override
-                    public void onStart() {}
-
-                    @Override
-                    public void onProgress(String message) {}
-
-                    @Override
-                    public void onFailure(String message) {}
-
-                    @Override
-                    public void onSuccess(String message) {}
-
-                    @Override
-                    public void onFinish() {}
-                });
-            } catch (FFmpegCommandAlreadyRunningException e) {
-                // Handle if FFmpeg is already running
-            }
+            execFFmpegBinary(cmd);
             // Do video encoding asyncronously.
             // TODO(paulmolloy): Problems takes ages, video is sped up so timestamps won't work.
             AsyncTask.execute(new Runnable() {
@@ -206,7 +180,6 @@ public class FaceDetector extends Fragment implements CameraBridgeViewBase.CvCam
                         Log.e(TAG, "Exception occured finishing encoding video:" + e);
                     } finally {
                         NIOUtils.closeQuietly(out);
-
                     }
                 }
             });
@@ -219,17 +192,15 @@ public class FaceDetector extends Fragment implements CameraBridgeViewBase.CvCam
 
         });
 
-        File root = Environment.getExternalStorageDirectory();
 
-        File dir = new File (root.getAbsolutePath() + "/download");
-        Log.d(TAG, "Full file path: " + dir.getAbsolutePath());
-        dir.mkdirs();
         File file = new File(dir, "myData.txt");
+        String[] fileText = new String[]{"Hi , How are you", "Hellokl"};
         try {
             FileOutputStream f = new FileOutputStream(file);
             PrintWriter pw = new PrintWriter(f);
-            pw.println("Hi , How are you");
-            pw.println("Hellokl");
+            for(String s : fileText) {
+                pw.println(s);
+            }
             pw.flush();
             pw.close();
             f.close();
@@ -331,8 +302,11 @@ public class FaceDetector extends Fragment implements CameraBridgeViewBase.CvCam
 
 
         if( !finished) {
-            bitmaps.add(matToBitmap(colorImage));
+            Bitmap bitmap = matToBitmap(colorImage);
+            saveTempBitmapFrame(bitmap, frameCount);
+            bitmaps.add(bitmap);
             Log.d(TAG, "Bitmap added to list");
+            frameCount ++;
         }
 
 
@@ -362,5 +336,97 @@ public class FaceDetector extends Fragment implements CameraBridgeViewBase.CvCam
         }
         return bitmap;
     }
+
+    private void loadFFMpegBinary() {
+        try {
+            ffmpeg.loadBinary(new LoadBinaryResponseHandler() {
+                @Override
+                public void onFailure() {
+
+                }
+            });
+        } catch (FFmpegNotSupportedException e) {
+            Log.e(TAG, "An exception happended setting up ffmpeg: " + e);
+        }
+    }
+
+    private void execFFmpegBinary(final String[] command) {
+        try {
+            ffmpeg.execute(command, new ExecuteBinaryResponseHandler() {
+                @Override
+                public void onFailure(String s) {
+                    Log.d(TAG, "FAILED with output : "+s);
+                }
+
+                @Override
+                public void onSuccess(String s) {
+                    Log.d(TAG, "SUCCESS with output : "+s);
+                }
+
+                @Override
+                public void onProgress(String s) {
+                    Log.d(TAG, "Started command : ffmpeg " + Arrays.toString(command));
+                    Log.d(TAG, "progress : "+s);
+                }
+
+                @Override
+                public void onStart() {
+
+                    Log.d(TAG, "Started command : ffmpeg " + Arrays.toString(command));
+
+                }
+
+                @Override
+                public void onFinish() {
+                    Log.d(TAG, "Finished command : ffmpeg ");
+                }
+            });
+        } catch (FFmpegCommandAlreadyRunningException e) {
+            // do nothing for now
+        }
+    }
+
+    private void saveImage(Bitmap finalBitmap, String fileName) {
+
+        String root = Environment.getExternalStorageDirectory().toString();
+        File myDir = new File(root + "/download/");
+        myDir.mkdirs();
+
+        String fname = fileName +".jpg";
+
+        File file = new File(myDir, fname);
+        if (file.exists()) file.delete ();
+        try {
+            FileOutputStream out = new FileOutputStream(file);
+            finalBitmap.compress(Bitmap.CompressFormat.JPEG, 100, out);
+            out.flush();
+            out.close();
+            Log.d(TAG, "Saved frame to: " + file.getAbsolutePath());
+
+        } catch (Exception e) {
+            Log.e(TAG, "Failed to save frame: " + e);
+            e.printStackTrace();
+
+        }
+    }
+
+    public void saveTempBitmapFrame(Bitmap bitmap, int frameNum ) {
+        if (isExternalStorageWritable()) {
+            saveImage(bitmap, "tb-bitmap-frame-"+ frameNum);
+            Log.d(TAG, "Saved bitmap " + frameNum);
+        }else{
+            //prompt the user or do something
+        }
+    }
+
+    /* Checks if external storage is available for read and write */
+    public boolean isExternalStorageWritable() {
+        String state = Environment.getExternalStorageState();
+        if (Environment.MEDIA_MOUNTED.equals(state)) {
+            return true;
+        }
+        return false;
+    }
+
 
 }
