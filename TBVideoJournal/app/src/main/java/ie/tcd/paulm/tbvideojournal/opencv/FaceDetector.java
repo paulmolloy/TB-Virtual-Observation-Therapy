@@ -148,7 +148,7 @@ public class FaceDetector extends Fragment implements CameraBridgeViewBase.CvCam
 
         // TODO(paulmolloy) write to apps internal dir.
         // Setup external /downloads dir for writing to.
-        File dir = new File (root.getAbsolutePath() + "/download");
+        File dir = new File (root.getAbsolutePath() + "/tb-vot");
         Log.d(TAG, "Full file path: " + dir.getAbsolutePath());
         dir.mkdirs();
         frameCount = 0;
@@ -161,6 +161,16 @@ public class FaceDetector extends Fragment implements CameraBridgeViewBase.CvCam
             loadFFMpegBinary();
             String[] cmd = new String[]{"-version"};
             execFFmpegBinary(cmd);
+
+            //String vidCmdS = "-f image2 -framerate 10  -i " + root.getAbsolutePath() + "/download/" + "tb-bitmap-frame-%01d.jpg -c:v libx264 -pix_fmt yuv420p -movflags +faststart" + root.getAbsolutePath() + "/download/ffmpegoutput.mp4";
+            //String[] videoCommand = vidCmdS.split(" ");
+
+            String[] complexCommand = new String[]{"-i", root.getAbsolutePath() + "/tb-vot/" + "tb-bitmap-frame-%01d.jpg" + "", "-c:v", "libx264", "-c:a", "aac", "-vf", "setpts=2*PTS", "-pix_fmt", "yuv420p", "-crf", "10", "-r", "15", "-shortest", "-y", root.getAbsolutePath() + "/tb-vot/tb-ffmpegoutput.mp4"};
+            execFFmpegBinary(complexCommand);
+//ffmpeg -i in.mov -vf "transpose=1" out.mov
+            //String[] rotateCommand = new String[]{"-i", root.getAbsolutePath() + "/download/tb-ffmpegoutput.mp4" , "-vf", "transpose=1", "-pix_fmt", "yuv420p", "-crf", "10", "-r", "15", "-shortest", "-y", root.getAbsolutePath() + "/download/tb-ffmpegoutput.mp4"};
+
+
             // Do video encoding asyncronously.
             // TODO(paulmolloy): Problems takes ages, video is sped up so timestamps won't work.
             AsyncTask.execute(new Runnable() {
@@ -213,7 +223,7 @@ public class FaceDetector extends Fragment implements CameraBridgeViewBase.CvCam
         }
 
         // Video File
-        videoFile = new File(root.getAbsolutePath() + "/download");
+        videoFile = new File(root.getAbsolutePath() + "/tb-vot");
 
         if (!videoFile.exists()){
             videoFile.mkdirs();
@@ -293,11 +303,9 @@ public class FaceDetector extends Fragment implements CameraBridgeViewBase.CvCam
                     facesArray[i].height, facesArray[i].width);
             Imgproc.rectangle(colorImage, recRot.br(), recRot.tl(), new Scalar(0, 255, 0, 255), 3);
 
-            //Imgproc.rectangle(colorImage, facesArray[i].br(), facesArray[i].tl(), new Scalar(0, 255, 0, 255), 3);
+            // Imgproc.rectangle(colorImage, facesArray[i].br(), facesArray[i].tl(), new Scalar(0, 255, 0, 255), 3);
 
         }
-
-
 
 
 
@@ -365,7 +373,7 @@ public class FaceDetector extends Fragment implements CameraBridgeViewBase.CvCam
 
                 @Override
                 public void onProgress(String s) {
-                    Log.d(TAG, "Started command : ffmpeg " + Arrays.toString(command));
+                    Log.d(TAG, "Progress command : ffmpeg " + Arrays.toString(command));
                     Log.d(TAG, "progress : "+s);
                 }
 
@@ -389,7 +397,7 @@ public class FaceDetector extends Fragment implements CameraBridgeViewBase.CvCam
     private void saveImage(Bitmap finalBitmap, String fileName) {
 
         String root = Environment.getExternalStorageDirectory().toString();
-        File myDir = new File(root + "/download/");
+        File myDir = new File(root + "/tb-vot");
         myDir.mkdirs();
 
         String fname = fileName +".jpg";
