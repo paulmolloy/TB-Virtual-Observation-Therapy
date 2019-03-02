@@ -17,6 +17,12 @@ import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.widget.RelativeLayout;
 
+import com.github.hiteshsondhi88.libffmpeg.ExecuteBinaryResponseHandler;
+import com.github.hiteshsondhi88.libffmpeg.FFmpeg;
+import com.github.hiteshsondhi88.libffmpeg.LoadBinaryResponseHandler;
+import com.github.hiteshsondhi88.libffmpeg.exceptions.FFmpegCommandAlreadyRunningException;
+import com.github.hiteshsondhi88.libffmpeg.exceptions.FFmpegNotSupportedException;
+
 import org.jcodec.api.android.AndroidSequenceEncoder;
 import org.jcodec.codecs.h264.H264Encoder;
 import org.jcodec.common.TrackType;
@@ -133,10 +139,54 @@ public class FaceDetector extends Fragment implements CameraBridgeViewBase.CvCam
 
         PillIntakeSteps steps = new PillIntakeSteps((MainActivity)getActivity(), (RelativeLayout)view);
         bitmaps = new ArrayList<Bitmap>();
+
+
         steps.onAllPillsTaken(() -> {
             Misc.toast("All pills taken! (Will add UI for this in a bit)", getContext());
             finished = true;
 
+            FFmpeg ffmpeg = FFmpeg.getInstance(getContext());
+            try {
+                ffmpeg.loadBinary(new LoadBinaryResponseHandler() {
+
+                    @Override
+                    public void onStart() {}
+
+                    @Override
+                    public void onFailure() {}
+
+                    @Override
+                    public void onSuccess() {}
+
+                    @Override
+                    public void onFinish() {}
+                });
+            } catch (FFmpegNotSupportedException e) {
+                // Handle if FFmpeg is not supported by device
+            }
+            String[] cmd = new String[]{"-version"};
+            try {
+                // to execute "ffmpeg -version" command you just need to pass "-version"
+                ffmpeg.execute(cmd, new ExecuteBinaryResponseHandler() {
+
+                    @Override
+                    public void onStart() {}
+
+                    @Override
+                    public void onProgress(String message) {}
+
+                    @Override
+                    public void onFailure(String message) {}
+
+                    @Override
+                    public void onSuccess(String message) {}
+
+                    @Override
+                    public void onFinish() {}
+                });
+            } catch (FFmpegCommandAlreadyRunningException e) {
+                // Handle if FFmpeg is already running
+            }
             // Do video encoding asyncronously.
             // TODO(paulmolloy): Problems takes ages, video is sped up so timestamps won't work.
             AsyncTask.execute(new Runnable() {
@@ -156,7 +206,6 @@ public class FaceDetector extends Fragment implements CameraBridgeViewBase.CvCam
                         Log.e(TAG, "Exception occured finishing encoding video:" + e);
                     } finally {
                         NIOUtils.closeQuietly(out);
-                        Misc.toast("Finished saving video: " + finished, getContext());
 
                     }
                 }
@@ -203,7 +252,8 @@ public class FaceDetector extends Fragment implements CameraBridgeViewBase.CvCam
         try {
             Log.d(TAG, "Destination file: " + videoFile.getAbsolutePath() + "/test.mp4");
             out = NIOUtils.writableFileChannel(videoFile.getAbsolutePath() + "/test.mp4");
-            encoder = new AndroidSequenceEncoder(out, Rational.R(15, 1));
+            encoder = new AndroidSequenceEncoder(out, Rational.R(5, 1));
+
             finished = false;
         }catch(Exception e ) {
             Log.e(TAG, "Exception occured setting up encoding video");
