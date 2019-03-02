@@ -36,6 +36,11 @@ public class MainActivity extends AppCompatActivity {
             ActivityCompat.requestPermissions(this, new String[] {Manifest.permission.CAMERA},
                     1);
         }
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO)
+                == PackageManager.PERMISSION_DENIED) {
+            ActivityCompat.requestPermissions(this, new String[] {Manifest.permission.RECORD_AUDIO},
+                    1);
+        }
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE)
                 == PackageManager.PERMISSION_DENIED) {
             ActivityCompat.requestPermissions(this, new String[] {Manifest.permission.WRITE_EXTERNAL_STORAGE},

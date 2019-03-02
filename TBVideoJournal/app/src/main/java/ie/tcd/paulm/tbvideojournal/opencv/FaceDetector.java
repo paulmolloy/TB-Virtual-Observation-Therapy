@@ -2,20 +2,23 @@ package ie.tcd.paulm.tbvideojournal.opencv;
 
 
 
-import android.app.Activity;
 import android.content.Context;
 import android.graphics.Bitmap;
-import android.os.AsyncTask;
+import android.graphics.Canvas;
+import android.media.CamcorderProfile;
+import android.media.MediaRecorder;
 import android.os.Bundle;
 import android.os.Environment;
 import android.support.v4.app.Fragment;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.Surface;
 import android.view.SurfaceView;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.widget.RelativeLayout;
+import android.widget.TextView;
 
 import com.github.hiteshsondhi88.libffmpeg.ExecuteBinaryResponseHandler;
 import com.github.hiteshsondhi88.libffmpeg.FFmpeg;
@@ -23,40 +26,24 @@ import com.github.hiteshsondhi88.libffmpeg.LoadBinaryResponseHandler;
 import com.github.hiteshsondhi88.libffmpeg.exceptions.FFmpegCommandAlreadyRunningException;
 import com.github.hiteshsondhi88.libffmpeg.exceptions.FFmpegNotSupportedException;
 
-import org.jcodec.api.android.AndroidSequenceEncoder;
-import org.jcodec.codecs.h264.H264Encoder;
-import org.jcodec.common.TrackType;
 import org.jcodec.common.io.FileChannelWrapper;
-import org.jcodec.common.io.NIOUtils;
-import org.jcodec.common.model.ColorSpace;
-import org.jcodec.common.model.Picture;
-import org.jcodec.common.model.Rational;
-import org.jcodec.containers.mp4.Brand;
-import org.jcodec.containers.mp4.muxer.MP4Muxer;
 import org.opencv.android.*;
-import org.opencv.android.CameraBridgeViewBase.CvCameraViewListener;
 import org.opencv.core.*;
 import org.opencv.imgproc.Imgproc;
 import org.opencv.objdetect.CascadeClassifier;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.PrintWriter;
-import java.nio.ByteBuffer;
-import java.util.ArrayList;
+
+import java.security.spec.ECField;
 import java.util.Arrays;
-import java.util.List;
 
 import ie.tcd.paulm.tbvideojournal.MainActivity;
 import ie.tcd.paulm.tbvideojournal.R;
 import ie.tcd.paulm.tbvideojournal.misc.Misc;
 import ie.tcd.paulm.tbvideojournal.steps.PillIntakeSteps;
-
-import static android.support.constraint.Constraints.TAG;
-import static org.jcodec.common.model.ColorSpace.RGB;
 
 public class FaceDetector extends Fragment implements CameraBridgeViewBase.CvCameraViewListener2 {
 
@@ -73,14 +60,22 @@ public class FaceDetector extends Fragment implements CameraBridgeViewBase.CvCam
     private Mat mRgbaF;
     private Mat mRgbaT;
     private FileChannelWrapper out;
-    private File videoFile;
-    private AndroidSequenceEncoder encoder;
     private Boolean finished;
-    private List<Bitmap> bitmaps;
-    private int frameNum;
     private FFmpeg ffmpeg;
     private File dir;
     private int frameCount;
+    // FPS Debugging.
+    private int mFPS;
+    private long startTime;
+    private long currentTime;
+    private TextView fpsTextView;
+    private static final String VOT_DIR = "/tb-vot/";
+    private static final String VOT_FRAME_PREFIX = "tb-bitmap-frame-";
+    private static final  String VOT_VIDEO_FILENAME = "latest-vot";
+    MediaRecorder recorder;
+    Surface recSurface;
+
+
 
 
     private BaseLoaderCallback mLoaderCallback = new BaseLoaderCallback(getContext()) {
@@ -107,7 +102,6 @@ public class FaceDetector extends Fragment implements CameraBridgeViewBase.CvCam
             File mCascadeFile = new File(cascadeDir, "lbpcascade_frontalface.xml");
             FileOutputStream os = new FileOutputStream(mCascadeFile);
 
-
             byte[] buffer = new byte[4096];
             int bytesRead;
             while ((bytesRead = is.read(buffer)) != -1) {
@@ -133,25 +127,26 @@ public class FaceDetector extends Fragment implements CameraBridgeViewBase.CvCam
         View view = inflater.inflate(R.layout.fragment_camera, container, false);
 
         Log.i(TAG, "called onCreateView");
-
-//        getActivity().requestWindowFeature(Window.FEATURE_NO_TITLE);
         getActivity().getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
         mOpenCvCameraView = view.findViewById(R.id.color_blob_detection_activity_surface_view);
         mOpenCvCameraView.setVisibility(SurfaceView.VISIBLE);
         mOpenCvCameraView.setCvCameraViewListener(this);
 
-        PillIntakeSteps steps = new PillIntakeSteps((MainActivity)getActivity(), (RelativeLayout)view);
-        bitmaps = new ArrayList<Bitmap>();
+        startTime = 0;
+        currentTime = 1000;
+        fpsTextView = (TextView) view.findViewById(R.id.fps_tv);
 
+        PillIntakeSteps steps = new PillIntakeSteps((MainActivity)getActivity(), (RelativeLayout)view);
         File root = Environment.getExternalStorageDirectory();
 
-        // TODO(paulmolloy) write to apps internal dir.
+        // TODO(paulmolloy) write to apps internal dir for more privacy.
         // Setup external /downloads dir for writing to.
-        File dir = new File (root.getAbsolutePath() + "/tb-vot");
+        File dir = new File (root.getAbsolutePath() + VOT_DIR);
         Log.d(TAG, "Full file path: " + dir.getAbsolutePath());
         dir.mkdirs();
         frameCount = 0;
+        finished = false;
 
 
         steps.onAllPillsTaken(() -> {
@@ -159,35 +154,12 @@ public class FaceDetector extends Fragment implements CameraBridgeViewBase.CvCam
             finished = true;
             ffmpeg =  FFmpeg.getInstance(getContext());
             loadFFMpegBinary();
-            String[] cmd = new String[]{"-version"};
-            execFFmpegBinary(cmd);
-            
-            String[] videoCommand = new String[]{"-i", root.getAbsolutePath() + "/tb-vot/" + "tb-bitmap-frame-%01d.jpg" + "", "-c:v", "libx264", "-c:a", "aac", "-vf", "setpts=2*PTS, transpose=2", "-pix_fmt", "yuv420p", "-crf", "10", "-r", "15", "-shortest", "-y", root.getAbsolutePath() + "/tb-vot/tb-ffmpegoutput-rotated.mp4"};
-            execFFmpegBinary(videoCommand);
-
-            // Do video encoding asyncronously.
-            // TODO(paulmolloy): Problems takes ages, video is sped up so timestamps won't work.
-            AsyncTask.execute(new Runnable() {
-                @Override
-                public void run() {
-                    // Save frame to video.
-                    try {
-                        for(int i = 0; i < bitmaps.size(); i++) {
-                            encoder.encodeImage(bitmaps.get(i));
-                            Log.d(TAG, "Encoding frame " + i + " of " + bitmaps.size());
-
-                        }
-                        encoder.finish();
-                        Log.d(TAG, "Finished encoding video");
-
-                    }catch(Exception e ) {
-                        Log.e(TAG, "Exception occured finishing encoding video:" + e);
-                    } finally {
-                        NIOUtils.closeQuietly(out);
-                    }
-                }
-            });
-
+            // Magic command for turning the VOT images into an mp4.
+            String[] videoCommand = new String[]{"-i", root.getAbsolutePath() + VOT_DIR
+                    + VOT_FRAME_PREFIX + "%01d.jpg" + "", "-c:v", "libx264", "-c:a", "aac", "-vf",
+                    "setpts=2*PTS, transpose=2", "-pix_fmt", "yuv420p", "-crf", "10", "-r", "15",
+                    "-shortest", "-y", root.getAbsolutePath() + VOT_DIR + VOT_VIDEO_FILENAME + ".mp4"};
+             execFFmpegBinary(videoCommand);
 
         });
         steps.onStepChanged((step, pill) -> {
@@ -197,45 +169,7 @@ public class FaceDetector extends Fragment implements CameraBridgeViewBase.CvCam
         });
 
 
-        File file = new File(dir, "myData.txt");
-        String[] fileText = new String[]{"Hi , How are you", "Hellokl"};
-        try {
-            FileOutputStream f = new FileOutputStream(file);
-            PrintWriter pw = new PrintWriter(f);
-            for(String s : fileText) {
-                pw.println(s);
-            }
-            pw.flush();
-            pw.close();
-            f.close();
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-            Log.i(TAG, "******* File not found. Did you" +
-                    " add a WRITE_EXTERNAL_STORAGE permission to the   manifest?");
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-        // Video File
-        videoFile = new File(root.getAbsolutePath() + "/tb-vot");
-
-        if (!videoFile.exists()){
-            videoFile.mkdirs();
-        }
-
-        // Setup video encoder.
-        try {
-            Log.d(TAG, "Destination file: " + videoFile.getAbsolutePath() + "/test.mp4");
-            out = NIOUtils.writableFileChannel(videoFile.getAbsolutePath() + "/test.mp4");
-            encoder = new AndroidSequenceEncoder(out, Rational.R(5, 1));
-
-            finished = false;
-        }catch(Exception e ) {
-            Log.e(TAG, "Exception occured setting up encoding video");
-        }
         return view;
-
-
     }
 
 
@@ -248,28 +182,15 @@ public class FaceDetector extends Fragment implements CameraBridgeViewBase.CvCam
         rotatedColorImage = new Mat(width, width, CvType.CV_8UC4);
         grayscaleImageRot= new Mat(width, width, CvType.CV_8UC4);
 
-
-
-
-        // The faces will be a 20% of the height of the screen
+        // The faces will be ~ 20% of the height of the screen.
         absoluteFaceSize = (int) (height * 0.2);
+
     }
 
     @Override
     public void onCameraViewStopped() {
             // colorImage.release();
             // rotatedColorImage.release();
-        // Close video encoding.
-        if(!finished) {
-            try {
-                encoder.finish();
-            }catch(Exception e ) {
-                Log.e(TAG, "Exception occured finishing encoding video when stopped: " + e);
-            } finally {
-                NIOUtils.closeQuietly(out);
-            }
-        }
-
     }
 
     @Override
@@ -297,19 +218,30 @@ public class FaceDetector extends Fragment implements CameraBridgeViewBase.CvCam
                     facesArray[i].height, facesArray[i].width);
             Imgproc.rectangle(colorImage, recRot.br(), recRot.tl(), new Scalar(0, 255, 0, 255), 3);
 
-            // Imgproc.rectangle(colorImage, facesArray[i].br(), facesArray[i].tl(), new Scalar(0, 255, 0, 255), 3);
-
         }
 
-
-
+        // Save the frame to be used for the video
         if( !finished) {
-            Bitmap bitmap = matToBitmap(colorImage);
-            saveTempBitmapFrame(bitmap, frameCount);
-            bitmaps.add(bitmap);
+            saveTempBitmapFrame(matToBitmap(colorImage), frameCount);
             Log.d(TAG, "Bitmap added to list");
             frameCount ++;
         }
+
+
+        // Keep track of what the FPS is.
+        getActivity().runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                if (currentTime - startTime >= 1000) {
+                    fpsTextView.setText("FPS: " + String.valueOf(mFPS));
+                    mFPS = 0;
+                    startTime = System.currentTimeMillis();
+                }
+                currentTime = System.currentTimeMillis();
+                mFPS += 1;
+
+            }
+        });
 
 
         return colorImage;
@@ -327,6 +259,7 @@ public class FaceDetector extends Fragment implements CameraBridgeViewBase.CvCam
         }
     }
 
+    // matToBitmap converts an image Matrix to a Bitmap image.
     private Bitmap matToBitmap(Mat mat){
         Bitmap bitmap = Bitmap.createBitmap(mOpenCvCameraView.getWidth()/4,mOpenCvCameraView.getHeight()/4, Bitmap.Config.ARGB_8888);
         try {
@@ -339,6 +272,7 @@ public class FaceDetector extends Fragment implements CameraBridgeViewBase.CvCam
         return bitmap;
     }
 
+    // loadFFMpegBinary sets up Ffmpeg for doing commands.
     private void loadFFMpegBinary() {
         try {
             ffmpeg.loadBinary(new LoadBinaryResponseHandler() {
@@ -352,6 +286,7 @@ public class FaceDetector extends Fragment implements CameraBridgeViewBase.CvCam
         }
     }
 
+    // execFFmpegBinary runs Ffppeg commands tokenized in a string array.
     private void execFFmpegBinary(final String[] command) {
         try {
             ffmpeg.execute(command, new ExecuteBinaryResponseHandler() {
@@ -381,17 +316,19 @@ public class FaceDetector extends Fragment implements CameraBridgeViewBase.CvCam
                 @Override
                 public void onFinish() {
                     Log.d(TAG, "Finished command : ffmpeg ");
+                    // TODO(paulmolloy): Figure out why it doesn't seem to be finished yet here.
                 }
             });
         } catch (FFmpegCommandAlreadyRunningException e) {
-            // do nothing for now
+            Log.e(TAG, "Running ffmpeg: " + e);
         }
     }
 
+    // Saves a bitmap image to the applications dir with a given filename.
     private void saveImage(Bitmap finalBitmap, String fileName) {
 
         String root = Environment.getExternalStorageDirectory().toString();
-        File myDir = new File(root + "/tb-vot");
+        File myDir = new File(root + VOT_DIR);
         myDir.mkdirs();
 
         String fname = fileName +".jpg";
@@ -412,12 +349,13 @@ public class FaceDetector extends Fragment implements CameraBridgeViewBase.CvCam
         }
     }
 
+    // Saves a bitmap frame of the VOT using the frame number for file name.
     public void saveTempBitmapFrame(Bitmap bitmap, int frameNum ) {
         if (isExternalStorageWritable()) {
-            saveImage(bitmap, "tb-bitmap-frame-"+ frameNum);
+            saveImage(bitmap, VOT_FRAME_PREFIX + frameNum);
             Log.d(TAG, "Saved bitmap " + frameNum);
         }else{
-            //prompt the user or do something
+            Log.w(TAG, "The external storage isn't writable, aborting saving frame.");
         }
     }
 
@@ -428,6 +366,15 @@ public class FaceDetector extends Fragment implements CameraBridgeViewBase.CvCam
             return true;
         }
         return false;
+    }
+
+    public void releaseMediaRecorder() {
+        Log.e("debug","releaseMediaRecorder");
+        if (recorder != null) {
+            recorder.reset(); // clear recorder configuration
+            recorder.release(); // release the recorder object
+            recorder = null;
+        }
     }
 
 
