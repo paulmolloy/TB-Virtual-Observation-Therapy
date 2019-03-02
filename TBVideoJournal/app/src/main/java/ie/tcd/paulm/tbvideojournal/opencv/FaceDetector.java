@@ -161,15 +161,9 @@ public class FaceDetector extends Fragment implements CameraBridgeViewBase.CvCam
             loadFFMpegBinary();
             String[] cmd = new String[]{"-version"};
             execFFmpegBinary(cmd);
-
-            //String vidCmdS = "-f image2 -framerate 10  -i " + root.getAbsolutePath() + "/download/" + "tb-bitmap-frame-%01d.jpg -c:v libx264 -pix_fmt yuv420p -movflags +faststart" + root.getAbsolutePath() + "/download/ffmpegoutput.mp4";
-            //String[] videoCommand = vidCmdS.split(" ");
-
-            String[] complexCommand = new String[]{"-i", root.getAbsolutePath() + "/tb-vot/" + "tb-bitmap-frame-%01d.jpg" + "", "-c:v", "libx264", "-c:a", "aac", "-vf", "setpts=2*PTS", "-pix_fmt", "yuv420p", "-crf", "10", "-r", "15", "-shortest", "-y", root.getAbsolutePath() + "/tb-vot/tb-ffmpegoutput.mp4"};
-            execFFmpegBinary(complexCommand);
-//ffmpeg -i in.mov -vf "transpose=1" out.mov
-            //String[] rotateCommand = new String[]{"-i", root.getAbsolutePath() + "/download/tb-ffmpegoutput.mp4" , "-vf", "transpose=1", "-pix_fmt", "yuv420p", "-crf", "10", "-r", "15", "-shortest", "-y", root.getAbsolutePath() + "/download/tb-ffmpegoutput.mp4"};
-
+            
+            String[] videoCommand = new String[]{"-i", root.getAbsolutePath() + "/tb-vot/" + "tb-bitmap-frame-%01d.jpg" + "", "-c:v", "libx264", "-c:a", "aac", "-vf", "setpts=2*PTS, transpose=2", "-pix_fmt", "yuv420p", "-crf", "10", "-r", "15", "-shortest", "-y", root.getAbsolutePath() + "/tb-vot/tb-ffmpegoutput-rotated.mp4"};
+            execFFmpegBinary(videoCommand);
 
             // Do video encoding asyncronously.
             // TODO(paulmolloy): Problems takes ages, video is sped up so timestamps won't work.
