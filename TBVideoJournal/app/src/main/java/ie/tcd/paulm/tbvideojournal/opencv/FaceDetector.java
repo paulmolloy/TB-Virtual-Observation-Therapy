@@ -3,13 +3,19 @@ package ie.tcd.paulm.tbvideojournal.opencv;
 
 
 import android.content.Context;
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
+import android.hardware.display.DisplayManager;
+import android.hardware.display.VirtualDisplay;
 import android.media.CamcorderProfile;
 import android.media.MediaRecorder;
+import android.media.projection.MediaProjection;
+import android.media.projection.MediaProjectionManager;
 import android.os.Bundle;
 import android.os.Environment;
 import android.support.v4.app.Fragment;
+import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Surface;
@@ -19,6 +25,7 @@ import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.github.hiteshsondhi88.libffmpeg.ExecuteBinaryResponseHandler;
 import com.github.hiteshsondhi88.libffmpeg.FFmpeg;
@@ -38,12 +45,16 @@ import java.io.IOException;
 import java.io.InputStream;
 
 import java.security.spec.ECField;
+import java.text.SimpleDateFormat;
 import java.util.Arrays;
+import java.util.Date;
 
 import ie.tcd.paulm.tbvideojournal.MainActivity;
 import ie.tcd.paulm.tbvideojournal.R;
 import ie.tcd.paulm.tbvideojournal.misc.Misc;
 import ie.tcd.paulm.tbvideojournal.steps.PillIntakeSteps;
+
+import static android.app.Activity.RESULT_OK;
 
 public class FaceDetector extends Fragment implements CameraBridgeViewBase.CvCameraViewListener2 {
 
@@ -74,6 +85,12 @@ public class FaceDetector extends Fragment implements CameraBridgeViewBase.CvCam
     private static final  String VOT_VIDEO_FILENAME = "latest-vot";
     MediaRecorder recorder;
     Surface recSurface;
+    private static final int CAST_PERMISSION_CODE = 22;
+    private DisplayMetrics mDisplayMetrics;
+    private MediaProjection mMediaProjection;
+    private VirtualDisplay mVirtualDisplay;
+    private MediaRecorder mMediaRecorder;
+    private MediaProjectionManager mProjectionManager;
 
 
 
@@ -160,14 +177,23 @@ public class FaceDetector extends Fragment implements CameraBridgeViewBase.CvCam
                     "setpts=2*PTS, transpose=2", "-pix_fmt", "yuv420p", "-crf", "10", "-r", "15",
                     "-shortest", "-y", root.getAbsolutePath() + VOT_DIR + VOT_VIDEO_FILENAME + ".mp4"};
              execFFmpegBinary(videoCommand);
-
+             stopRecording();
         });
         steps.onStepChanged((step, pill) -> {
             Misc.toast("Now on pill " + pill + ", step " + step, getContext(), true);
             // TODO(paulmolloy): Record Timestamps here.
+            startRecording();
 
         });
 
+        mDisplayMetrics= new DisplayMetrics();
+        getActivity().getWindowManager().getDefaultDisplay().getMetrics(mDisplayMetrics);
+        mMediaRecorder = new MediaRecorder();
+
+        mProjectionManager = (MediaProjectionManager) getContext().getSystemService(Context.MEDIA_PROJECTION_SERVICE);
+
+
+        prepareRecording();
 
         return view;
     }
@@ -377,5 +403,111 @@ public class FaceDetector extends Fragment implements CameraBridgeViewBase.CvCam
         }
     }
 
+
+    private void startRecording() {
+        // If mMediaProjection is null that means we didn't get a context, lets ask the user
+        if (mMediaProjection == null) {
+            // This asks for user permissions to capture the screen
+            startActivityForResult(mProjectionManager.createScreenCaptureIntent(), CAST_PERMISSION_CODE);
+            return;
+        }
+        mVirtualDisplay = createVirtualDisplay();
+        mMediaRecorder.start();
+    }
+
+    private void stopRecording() {
+        if (mMediaRecorder != null) {
+            mMediaRecorder.stop();
+            mMediaRecorder.reset();
+        }
+        if (mVirtualDisplay != null) {
+            mVirtualDisplay.release();
+        }
+        if (mMediaProjection != null) {
+            mMediaProjection.stop();
+        }
+        prepareRecording();
+    }
+
+    public String getCurSysDate() {
+        return new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss").format(new Date());
+    }
+
+    private void prepareRecording() {
+
+
+        final String directory = Environment.getExternalStorageDirectory() + File.separator + "Recordings";
+        if (!Environment.MEDIA_MOUNTED.equals(Environment.getExternalStorageState())) {
+            Misc.toast("Failed to get External Storage", getContext());
+
+
+            return;
+        }
+        final File folder = new File(directory);
+        boolean success = true;
+        if (!folder.exists()) {
+            success = folder.mkdir();
+        }
+        String filePath;
+        if (success) {
+            String videoName = ("capture_" + getCurSysDate() + ".mp4");
+            filePath = directory + File.separator + videoName;
+        } else {
+            Misc.toast("Failed to create Recordings directory", getContext());
+
+            return;
+        }
+
+        int width = mDisplayMetrics.widthPixels;
+        int height = mDisplayMetrics.heightPixels;
+
+        mMediaRecorder.setAudioSource(MediaRecorder.AudioSource.MIC);
+        mMediaRecorder.setVideoSource(MediaRecorder.VideoSource.SURFACE);
+        mMediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4);
+        mMediaRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AMR_NB);
+        mMediaRecorder.setVideoEncoder(MediaRecorder.VideoEncoder.H264);
+        mMediaRecorder.setVideoSize(width, height);
+        mMediaRecorder.setVideoFrameRate(30);
+        mMediaRecorder.setOutputFile(filePath);
+        mMediaRecorder.setVideoEncodingBitRate(512 * 1000);
+        try {
+            mMediaRecorder.prepare();
+        } catch (Exception e) {
+            e.printStackTrace();
+            Log.e(TAG, "Failed preparing: " + e);
+            return;
+        }
+
+    }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (requestCode != CAST_PERMISSION_CODE) {
+            // Where did we get this request from ? -_-
+            Log.w(TAG, "Unknown request code: " + requestCode);
+            return;
+        }
+        if (resultCode != RESULT_OK) {
+            Misc.toast("Screen Cast Permission Denied :(", getContext());
+
+            return;
+        }
+        mMediaProjection = mProjectionManager.getMediaProjection(resultCode, data);
+        // TODO Register a callback that will listen onStop and release & prepare the recorder for next recording
+        // mMediaProjection.registerCallback(callback, null);
+        mVirtualDisplay = createVirtualDisplay();
+        mMediaRecorder.start();
+    }
+
+    private VirtualDisplay createVirtualDisplay() {
+        int screenDensity = mDisplayMetrics.densityDpi;
+        int width = mDisplayMetrics.widthPixels;
+        int height = mDisplayMetrics.heightPixels;
+
+        return mMediaProjection.createVirtualDisplay(this.getClass().getSimpleName(),
+                width, height, screenDensity,
+                DisplayManager.VIRTUAL_DISPLAY_FLAG_AUTO_MIRROR,
+                mMediaRecorder.getSurface(), null /*Callbacks*/, null /*Handler*/);
+    }
 
 }
