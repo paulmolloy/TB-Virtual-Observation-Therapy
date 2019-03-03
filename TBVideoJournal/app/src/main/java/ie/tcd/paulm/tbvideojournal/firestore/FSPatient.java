@@ -8,6 +8,7 @@ import java.util.Map;
 public class FSPatient {
 
     public String name, email, nurseID;
+    public FSVotVideoRef[] votVideoRefs;
 
     public static void download(String patientID, PatientDownloadSuccess onSuccess, PatientDownloadFail onFail){
 
@@ -17,6 +18,9 @@ public class FSPatient {
                 p.name = d.getString("name");
                 p.email = d.getString("email");
                 p.nurseID = d.getString("nurseID");
+                // TODO(paulmolloy): Figure out if you really want to download
+                // all references here.
+                p.votVideoRefs = null;
                 onSuccess.run(p);
             })
             .addOnFailureListener(e -> onFail.run(e.getMessage()));

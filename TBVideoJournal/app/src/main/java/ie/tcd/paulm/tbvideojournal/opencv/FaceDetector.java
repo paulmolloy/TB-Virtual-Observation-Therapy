@@ -12,8 +12,10 @@ import android.media.CamcorderProfile;
 import android.media.MediaRecorder;
 import android.media.projection.MediaProjection;
 import android.media.projection.MediaProjectionManager;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
+import android.support.annotation.NonNull;
 import android.support.v4.app.Fragment;
 import android.util.DisplayMetrics;
 import android.util.Log;
@@ -32,6 +34,13 @@ import com.github.hiteshsondhi88.libffmpeg.FFmpeg;
 import com.github.hiteshsondhi88.libffmpeg.LoadBinaryResponseHandler;
 import com.github.hiteshsondhi88.libffmpeg.exceptions.FFmpegCommandAlreadyRunningException;
 import com.github.hiteshsondhi88.libffmpeg.exceptions.FFmpegNotSupportedException;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
+
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.OnProgressListener;
+import com.google.firebase.storage.StorageReference;
+import com.google.firebase.storage.UploadTask;
 
 import org.jcodec.common.io.FileChannelWrapper;
 import org.opencv.android.*;
@@ -47,10 +56,14 @@ import java.io.InputStream;
 import java.security.spec.ECField;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.Date;
 
 import ie.tcd.paulm.tbvideojournal.MainActivity;
 import ie.tcd.paulm.tbvideojournal.R;
+import ie.tcd.paulm.tbvideojournal.auth.Auth;
+import ie.tcd.paulm.tbvideojournal.firestore.FSPatient;
+import ie.tcd.paulm.tbvideojournal.firestore.FSVotVideoRef;
 import ie.tcd.paulm.tbvideojournal.misc.Misc;
 import ie.tcd.paulm.tbvideojournal.steps.PillIntakeSteps;
 
@@ -83,6 +96,9 @@ public class FaceDetector extends Fragment implements CameraBridgeViewBase.CvCam
     private static final String VOT_DIR = "/tb-vot/";
     private static final String VOT_FRAME_PREFIX = "tb-bitmap-frame-";
     private static final  String VOT_VIDEO_FILENAME = "latest-vot";
+    private static final String FIREBASE_VOT_DIR = "vot-videos/";
+
+    private static final String FIREBASE_FILENAME = "vot-";
 
     // Screen capture stuff.
     private static final String VOT_SCREEN_RECORD_VIDEO_FILENAME = "screen_record_latest";
@@ -93,7 +109,7 @@ public class FaceDetector extends Fragment implements CameraBridgeViewBase.CvCam
     private MediaRecorder mMediaRecorder;
     private MediaProjectionManager mProjectionManager;
     private boolean recording = false;
-    private int VIDEO_BITRATE = 512 * 40000;
+    private int VIDEO_BITRATE = 512 * 1000;// 40000;
 
 
 
@@ -185,9 +201,12 @@ public class FaceDetector extends Fragment implements CameraBridgeViewBase.CvCam
              execFFmpegBinary(videoCommand);
              stopRecording();
              recording = false;
+            saveVotFirebase(Environment.getExternalStorageDirectory().getAbsolutePath()
+                    + VOT_DIR + VOT_SCREEN_RECORD_VIDEO_FILENAME + ".mp4");
+
         });
         steps.onStepChanged((step, pill) -> {
-            Misc.toast("Now on pill " + pill + ", step " + step, getContext(), true);
+            // Misc.toast("Now on pill " + pill + ", step " + step, getContext(), true);
             // TODO(paulmolloy): Record Timestamps here.
             if( !recording) {
                 prepareRecording();
@@ -256,12 +275,12 @@ public class FaceDetector extends Fragment implements CameraBridgeViewBase.CvCam
 
         }
 
-        // Save the frame to be used for the video
-        if( !finished) {
-            saveTempBitmapFrame(matToBitmap(colorImage), frameCount);
-            Log.d(TAG, "Bitmap added to list");
-            frameCount ++;
-        }
+//        // Save the frame to be used for the video
+//        if( !finished) {
+//            saveTempBitmapFrame(matToBitmap(colorImage), frameCount);
+//            Log.d(TAG, "Bitmap added to list");
+//            frameCount ++;
+//        }
 
 
         // Keep track of what the FPS is.
@@ -510,6 +529,62 @@ public class FaceDetector extends Fragment implements CameraBridgeViewBase.CvCam
                 width, height, screenDensity,
                 DisplayManager.VIRTUAL_DISPLAY_FLAG_AUTO_MIRROR,
                 mMediaRecorder.getSurface(), null, null);
+    }
+
+    private String genCurDateString(){
+        Date c = Calendar.getInstance().getTime();
+        System.out.println("Current time => " + c);
+
+        SimpleDateFormat df = new SimpleDateFormat("dd-MMM-yyyy");
+        return df.format(c);
+
+    }
+
+
+    // Firebase video stuff
+
+    private void saveVotFirebase(String videoFilePath){
+        // Save video to firebase
+        FirebaseStorage storage = FirebaseStorage.getInstance();
+        StorageReference storageRef = storage.getReference();
+        // TODO(paulmolloy): Save to per user dirs.
+        StorageReference videoRef = storageRef.child(FIREBASE_VOT_DIR + FIREBASE_FILENAME + genCurDateString() + ".mp4");
+
+        Uri file = Uri.fromFile(new File(videoFilePath)); //Declare your url here.
+        UploadTask uploadTask = videoRef.putFile(file);
+        Log.d(TAG, "Uploading to : " + videoRef.getPath());
+
+        // Register observers to listen for when the download is done or if it fails
+        uploadTask.addOnFailureListener(new OnFailureListener() {
+            @Override
+            public void onFailure(@NonNull Exception exception) {
+                // Handle unsuccessful uploads
+            }
+        }).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
+            @Override
+            public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
+                // taskSnapshot.getMetadata() contains file metadata such as size, content-type, etc.
+                // ...
+                Log.d(TAG, "Uploaded your vot successfully" );
+                Misc.toast("Uploaded your vot successfully", getContext());
+                Log.d(TAG, "Upload finished location: " + videoRef.getPath());
+                // TODO(paulmolloy): Save reference to it in Firestore
+                FSVotVideoRef.addVideoReference(videoRef.getPath());
+
+
+
+
+
+            }
+        }).addOnProgressListener(new OnProgressListener<UploadTask.TaskSnapshot>() {
+            @Override
+            public void onProgress(UploadTask.TaskSnapshot taskSnapshot) {
+                double progress = (100.0 * taskSnapshot.getBytesTransferred()) / taskSnapshot.getTotalByteCount();
+                Log.d(TAG, "Upload is " + progress + "% done");
+            }
+        });
+
+
     }
 
 }
