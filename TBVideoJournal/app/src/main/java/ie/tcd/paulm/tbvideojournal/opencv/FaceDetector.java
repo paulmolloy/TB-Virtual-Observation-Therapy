@@ -91,6 +91,7 @@ public class FaceDetector extends Fragment implements CameraBridgeViewBase.CvCam
     private VirtualDisplay mVirtualDisplay;
     private MediaRecorder mMediaRecorder;
     private MediaProjectionManager mProjectionManager;
+    private boolean recording = false;
 
 
 
@@ -178,11 +179,15 @@ public class FaceDetector extends Fragment implements CameraBridgeViewBase.CvCam
                     "-shortest", "-y", root.getAbsolutePath() + VOT_DIR + VOT_VIDEO_FILENAME + ".mp4"};
              execFFmpegBinary(videoCommand);
              stopRecording();
+             recording = false;
         });
         steps.onStepChanged((step, pill) -> {
             Misc.toast("Now on pill " + pill + ", step " + step, getContext(), true);
             // TODO(paulmolloy): Record Timestamps here.
-            startRecording();
+            if( !recording) {
+                startRecording();
+                recording = true;
+            }
 
         });
 
@@ -426,37 +431,24 @@ public class FaceDetector extends Fragment implements CameraBridgeViewBase.CvCam
         if (mMediaProjection != null) {
             mMediaProjection.stop();
         }
-        prepareRecording();
-    }
-
-    public String getCurSysDate() {
-        return new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss").format(new Date());
     }
 
     private void prepareRecording() {
 
 
-        final String directory = Environment.getExternalStorageDirectory() + File.separator + "Recordings";
-        if (!Environment.MEDIA_MOUNTED.equals(Environment.getExternalStorageState())) {
-            Misc.toast("Failed to get External Storage", getContext());
+        File root = Environment.getExternalStorageDirectory();
 
-
+        // TODO(paulmolloy) write to apps internal dir for more privacy.
+        // Setup external /downloads dir for writing to.
+        File dir = new File (root.getAbsolutePath() + VOT_DIR);
+        Log.d(TAG, "Full file path: " + dir.getAbsolutePath());
+        dir.mkdirs();        if (!Environment.MEDIA_MOUNTED.equals(Environment.getExternalStorageState())) {
+            Log.e(TAG, "Failed to get External Storage");
             return;
-        }
-        final File folder = new File(directory);
-        boolean success = true;
-        if (!folder.exists()) {
-            success = folder.mkdir();
         }
         String filePath;
-        if (success) {
-            String videoName = ("capture_" + getCurSysDate() + ".mp4");
-            filePath = directory + File.separator + videoName;
-        } else {
-            Misc.toast("Failed to create Recordings directory", getContext());
-
-            return;
-        }
+        String videoName = ("screen_record_latest" + ".mp4");
+        filePath = dir+ File.separator + videoName;
 
         int width = mDisplayMetrics.widthPixels;
         int height = mDisplayMetrics.heightPixels;
