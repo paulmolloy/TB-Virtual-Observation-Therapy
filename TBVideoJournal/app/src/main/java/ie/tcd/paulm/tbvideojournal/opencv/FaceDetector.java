@@ -98,7 +98,7 @@ public class FaceDetector extends Fragment implements CameraBridgeViewBase.CvCam
     private static final  String VOT_VIDEO_FILENAME = "latest-vot";
     private static final String FIREBASE_VOT_DIR = "vot-videos/";
 
-    private static final String FIREBASE_FILENAME = "vot-";
+    private static final String FIREBASE_FILENAME = "-vot-";
 
     // Screen capture stuff.
     private static final String VOT_SCREEN_RECORD_VIDEO_FILENAME = "screen_record_latest";
@@ -548,7 +548,7 @@ public class FaceDetector extends Fragment implements CameraBridgeViewBase.CvCam
         FirebaseStorage storage = FirebaseStorage.getInstance();
         StorageReference storageRef = storage.getReference();
         // TODO(paulmolloy): Save to per user dirs.
-        StorageReference videoRef = storageRef.child(FIREBASE_VOT_DIR + FIREBASE_FILENAME + genCurDateString() + ".mp4");
+        StorageReference videoRef = storageRef.child(FIREBASE_VOT_DIR + Auth.getCurrentUserID() + FIREBASE_FILENAME + genCurDateString() + ".mp4");
 
         Uri file = Uri.fromFile(new File(videoFilePath)); //Declare your url here.
         UploadTask uploadTask = videoRef.putFile(file);
@@ -569,7 +569,7 @@ public class FaceDetector extends Fragment implements CameraBridgeViewBase.CvCam
                 Misc.toast("Uploaded your vot successfully", getContext());
                 Log.d(TAG, "Upload finished location: " + videoRef.getPath());
                 // TODO(paulmolloy): Save reference to it in Firestore
-                FSVotVideoRef.addVideoReference(videoRef.getPath());
+                FSVotVideoRef.addVideoReference(videoRef.getPath(), "TB Vot on " + genCurDateString());
 
 
 

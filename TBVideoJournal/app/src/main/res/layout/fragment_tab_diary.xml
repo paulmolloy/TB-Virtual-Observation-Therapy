@@ -11,17 +11,13 @@
         <VideoView
         android:id="@+id/last_video"
         android:layout_width="434dp"
-        android:layout_height="478dp" />
+        android:layout_height="254dp" />
 
-        <TextView
-            android:id="@+id/diary_b"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="252dp"
-            android:layout_marginLeft="252dp"
-            android:layout_marginBottom="125dp"
-            android:text="Last Video"
-            android:textAppearance="?android:attr/textAppearanceLarge" />
+        <ListView
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:id="@+id/vots_lv"
+            />
 
     </LinearLayout>
 
