@@ -21,13 +21,15 @@ import static android.provider.ContactsContract.CommonDataKinds.Website.URL;
 public class TabDiaryFragment extends Fragment {
 
     private static final  String VOT_VIDEO_FILENAME = "latest-vot";
+    private static final String VOT_SCREEN_RECORD_VIDEO_FILENAME = "screen_record_latest";
+
     private static final String VOT_DIR = "/tb-vot/";
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View v = inflater.inflate(R.layout.fragment_tab_diary, container, false);
         File root = Environment.getExternalStorageDirectory();
-        Uri uri = Uri.parse(root.getAbsolutePath() + VOT_DIR + VOT_VIDEO_FILENAME + ".mp4"); //Declare your url here.
+        Uri uri = Uri.parse(root.getAbsolutePath() + VOT_DIR + VOT_SCREEN_RECORD_VIDEO_FILENAME + ".mp4"); //Declare your url here.
 
         VideoView mVideoView  = (VideoView)v.findViewById(R.id.last_video);
         mVideoView.setMediaController(new MediaController(getContext()));

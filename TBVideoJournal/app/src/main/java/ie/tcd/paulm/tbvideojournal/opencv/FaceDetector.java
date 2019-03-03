@@ -83,8 +83,9 @@ public class FaceDetector extends Fragment implements CameraBridgeViewBase.CvCam
     private static final String VOT_DIR = "/tb-vot/";
     private static final String VOT_FRAME_PREFIX = "tb-bitmap-frame-";
     private static final  String VOT_VIDEO_FILENAME = "latest-vot";
-    MediaRecorder recorder;
-    Surface recSurface;
+
+    // Screen capture stuff.
+    private static final String VOT_SCREEN_RECORD_VIDEO_FILENAME = "screen_record_latest";
     private static final int CAST_PERMISSION_CODE = 22;
     private DisplayMetrics mDisplayMetrics;
     private MediaProjection mMediaProjection;
@@ -92,6 +93,7 @@ public class FaceDetector extends Fragment implements CameraBridgeViewBase.CvCam
     private MediaRecorder mMediaRecorder;
     private MediaProjectionManager mProjectionManager;
     private boolean recording = false;
+    private int VIDEO_BITRATE = 512 * 40000;
 
 
 
@@ -160,6 +162,9 @@ public class FaceDetector extends Fragment implements CameraBridgeViewBase.CvCam
 
         // TODO(paulmolloy) write to apps internal dir for more privacy.
         // Setup external /downloads dir for writing to.
+        if (!isExternalStorageWritable()) {
+            Log.e(TAG, "Failed to get External Storage");
+        }
         File dir = new File (root.getAbsolutePath() + VOT_DIR);
         Log.d(TAG, "Full file path: " + dir.getAbsolutePath());
         dir.mkdirs();
@@ -185,6 +190,7 @@ public class FaceDetector extends Fragment implements CameraBridgeViewBase.CvCam
             Misc.toast("Now on pill " + pill + ", step " + step, getContext(), true);
             // TODO(paulmolloy): Record Timestamps here.
             if( !recording) {
+                prepareRecording();
                 startRecording();
                 recording = true;
             }
@@ -197,8 +203,6 @@ public class FaceDetector extends Fragment implements CameraBridgeViewBase.CvCam
 
         mProjectionManager = (MediaProjectionManager) getContext().getSystemService(Context.MEDIA_PROJECTION_SERVICE);
 
-
-        prepareRecording();
 
         return view;
     }
@@ -222,6 +226,7 @@ public class FaceDetector extends Fragment implements CameraBridgeViewBase.CvCam
     public void onCameraViewStopped() {
             // colorImage.release();
             // rotatedColorImage.release();
+            releaseMediaRecorder();
     }
 
     @Override
@@ -289,6 +294,10 @@ public class FaceDetector extends Fragment implements CameraBridgeViewBase.CvCam
             mLoaderCallback.onManagerConnected(LoaderCallbackInterface.SUCCESS);
         }
     }
+
+
+    // FFMpeg Related stuff
+
 
     // matToBitmap converts an image Matrix to a Bitmap image.
     private Bitmap matToBitmap(Mat mat){
@@ -361,7 +370,6 @@ public class FaceDetector extends Fragment implements CameraBridgeViewBase.CvCam
         String root = Environment.getExternalStorageDirectory().toString();
         File myDir = new File(root + VOT_DIR);
         myDir.mkdirs();
-
         String fname = fileName +".jpg";
 
         File file = new File(myDir, fname);
@@ -399,12 +407,16 @@ public class FaceDetector extends Fragment implements CameraBridgeViewBase.CvCam
         return false;
     }
 
+
+    // The rest of the file is screen recording stuff.
+
+
     public void releaseMediaRecorder() {
         Log.e("debug","releaseMediaRecorder");
-        if (recorder != null) {
-            recorder.reset(); // clear recorder configuration
-            recorder.release(); // release the recorder object
-            recorder = null;
+        if (mMediaRecorder != null) {
+            mMediaRecorder.reset(); // clear recorder configuration
+            mMediaRecorder.release(); // release the recorder object
+            mMediaRecorder = null;
         }
     }
 
@@ -442,12 +454,13 @@ public class FaceDetector extends Fragment implements CameraBridgeViewBase.CvCam
         // Setup external /downloads dir for writing to.
         File dir = new File (root.getAbsolutePath() + VOT_DIR);
         Log.d(TAG, "Full file path: " + dir.getAbsolutePath());
-        dir.mkdirs();        if (!Environment.MEDIA_MOUNTED.equals(Environment.getExternalStorageState())) {
+        dir.mkdirs();
+        if (!isExternalStorageWritable()) {
             Log.e(TAG, "Failed to get External Storage");
             return;
         }
         String filePath;
-        String videoName = ("screen_record_latest" + ".mp4");
+        String videoName = (VOT_SCREEN_RECORD_VIDEO_FILENAME + ".mp4");
         filePath = dir+ File.separator + videoName;
 
         int width = mDisplayMetrics.widthPixels;
@@ -461,7 +474,7 @@ public class FaceDetector extends Fragment implements CameraBridgeViewBase.CvCam
         mMediaRecorder.setVideoSize(width, height);
         mMediaRecorder.setVideoFrameRate(30);
         mMediaRecorder.setOutputFile(filePath);
-        mMediaRecorder.setVideoEncodingBitRate(512 * 1000);
+        mMediaRecorder.setVideoEncodingBitRate(VIDEO_BITRATE);
         try {
             mMediaRecorder.prepare();
         } catch (Exception e) {
@@ -480,13 +493,11 @@ public class FaceDetector extends Fragment implements CameraBridgeViewBase.CvCam
             return;
         }
         if (resultCode != RESULT_OK) {
-            Misc.toast("Screen Cast Permission Denied :(", getContext());
+            Log.d(TAG, "Screen Cast Permission Denied");
 
             return;
         }
         mMediaProjection = mProjectionManager.getMediaProjection(resultCode, data);
-        // TODO Register a callback that will listen onStop and release & prepare the recorder for next recording
-        // mMediaProjection.registerCallback(callback, null);
         mVirtualDisplay = createVirtualDisplay();
         mMediaRecorder.start();
     }
@@ -495,11 +506,10 @@ public class FaceDetector extends Fragment implements CameraBridgeViewBase.CvCam
         int screenDensity = mDisplayMetrics.densityDpi;
         int width = mDisplayMetrics.widthPixels;
         int height = mDisplayMetrics.heightPixels;
-
         return mMediaProjection.createVirtualDisplay(this.getClass().getSimpleName(),
                 width, height, screenDensity,
                 DisplayManager.VIRTUAL_DISPLAY_FLAG_AUTO_MIRROR,
-                mMediaRecorder.getSurface(), null /*Callbacks*/, null /*Handler*/);
+                mMediaRecorder.getSurface(), null, null);
     }
 
 }
