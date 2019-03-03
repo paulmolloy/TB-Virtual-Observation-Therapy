@@ -8,13 +8,11 @@ import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
-import android.util.Log;
 
 import ie.tcd.paulm.tbvideojournal.auth.Auth;
 import ie.tcd.paulm.tbvideojournal.auth.SignInFragment;
 import ie.tcd.paulm.tbvideojournal.mainmenu.MainMenuFragment;
-import ie.tcd.paulm.tbvideojournal.opencv.CameraFragment;
-import ie.tcd.paulm.tbvideojournal.opencv.FaceDetector;
+import ie.tcd.paulm.tbvideojournal.opencv.VotCamera;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -76,11 +74,8 @@ public class MainActivity extends AppCompatActivity {
         showFragment(new SignInFragment(), "Sign In", true);
     }
 
-    public void showCameraScreen(){
-        showFragment(new CameraFragment(), "Camera");
-    }
     public void showFaceScreen(){
-        showFragment(new FaceDetector(), "FaceCamera");
+        showFragment(new VotCamera(), "FaceCamera");
     }
 
     /**

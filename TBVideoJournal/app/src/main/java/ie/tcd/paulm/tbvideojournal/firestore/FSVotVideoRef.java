@@ -21,6 +21,9 @@ public class FSVotVideoRef {
     private static final String  TAG              = "FSVotVideoRef";
     public static final String VOT_PART_PATH = "/votVideoRefs";
 
+    // addVideoReference saves a reference to every vot video a patient has made.
+    // It keeps the path in Firebase Storage, human redable label for video, and will have
+    // VoT section timestamps datastructure.
     public static void addVideoReference(String videoPath, String label){
         // Add a new document with a generated ID
 
@@ -70,7 +73,5 @@ public class FSVotVideoRef {
     public interface VotVideoRefDownloadFail {
         void run(String error);
     }
-
-
 
 }

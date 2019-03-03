@@ -14,23 +14,12 @@
         android:textAppearance="?android:attr/textAppearanceLarge"/>
 
     <Button
-        android:id="@+id/MainMenu_record"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:text="Record pill intake"
-        android:layout_centerHorizontal="true"
-
-        />
-
-    <Button
-        android:id="@+id/MainMenu_face"
+        android:id="@+id/MainMenu_vot"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="12dp"
-        android:text="Detect face test"
+        android:text="Record Video Observed Treatment for today"
         android:layout_centerHorizontal="true"
-        android:layout_below="@id/MainMenu_record"
 
         />
 </RelativeLayout >

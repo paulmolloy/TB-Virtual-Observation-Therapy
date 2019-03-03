@@ -10,18 +10,13 @@ import android.widget.Button;
 import ie.tcd.paulm.tbvideojournal.MainActivity;
 import ie.tcd.paulm.tbvideojournal.R;
 
-import ie.tcd.paulm.tbvideojournal.R;
-
 public class TabVideoFragment extends Fragment {
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_tab_video, container, false);
 
-        Button recordButton = view.findViewById(R.id.MainMenu_record);
-        recordButton.setOnClickListener(b -> getRoot().showCameraScreen());
-
-        Button faceButton = view.findViewById(R.id.MainMenu_face);
+        Button faceButton = view.findViewById(R.id.MainMenu_vot);
         faceButton.setOnClickListener(b -> getRoot().showFaceScreen());
 
         return view;

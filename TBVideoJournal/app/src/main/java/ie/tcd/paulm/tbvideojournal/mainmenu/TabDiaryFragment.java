@@ -4,7 +4,6 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
 import android.support.annotation.NonNull;
-import android.support.design.widget.TabLayout;
 import android.support.v4.app.Fragment;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -14,7 +13,6 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.MediaController;
-import android.widget.Toast;
 import android.widget.VideoView;
 
 import com.google.android.gms.tasks.OnFailureListener;
@@ -35,13 +33,9 @@ import java.util.Map;
 
 import ie.tcd.paulm.tbvideojournal.R;
 import ie.tcd.paulm.tbvideojournal.auth.Auth;
-import ie.tcd.paulm.tbvideojournal.firestore.FSNurse;
-import ie.tcd.paulm.tbvideojournal.firestore.FSPatient;
+
 import ie.tcd.paulm.tbvideojournal.firestore.FSVotVideoRef;
 import ie.tcd.paulm.tbvideojournal.misc.Misc;
-
-import static android.provider.ContactsContract.CommonDataKinds.Website.URL;
-
 
 public class TabDiaryFragment extends Fragment {
 
@@ -54,16 +48,20 @@ public class TabDiaryFragment extends Fragment {
     private ListView votsLV;
     private Map<String, String> nameToFSPath;
     private FirebaseStorage storage;
+    private Uri uri;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View v = inflater.inflate(R.layout.fragment_tab_diary, container, false);
         File root = Environment.getExternalStorageDirectory();
-        Uri uri = Uri.parse(root.getAbsolutePath() + VOT_DIR + VOT_SCREEN_RECORD_VIDEO_FILENAME + ".mp4"); //Declare your url here.
         votsLV = (ListView) v.findViewById(R.id.vots_lv);
-        VideoView mVideoView  = (VideoView)v.findViewById(R.id.last_video);
+        VideoView mVideoView  = (VideoView) v.findViewById(R.id.last_video);
         mVideoView.setMediaController(new MediaController(getContext()));
-        mVideoView.setVideoURI(uri);
+        File localFile = new File(root.getAbsolutePath() + VOT_DIR + VOT_SCREEN_RECORD_VIDEO_FILENAME + ".mp4");
+        if(localFile.exists()) {
+            uri = Uri.fromFile(localFile);
+            mVideoView.setVideoURI(uri);
+        }
 
         // Fill ListView with the vot video labels.
         FSVotVideoRef.downloadVotReferences(Auth.getCurrentUserID(),
@@ -103,7 +101,7 @@ public class TabDiaryFragment extends Fragment {
                 Misc.toast("You selected: " + item, getContext());
                 Log.d(TAG, "You selected: " + item);
 
-                // Download video if it isn't local.
+                // Play a vot video by clicking on it in the list.
                 storage = FirebaseStorage.getInstance();
                 StorageReference storageRef = storage.getReference();
                 StorageReference vidRef = storageRef.child(nameToFSPath.get(item));
@@ -112,9 +110,10 @@ public class TabDiaryFragment extends Fragment {
                 File dir = new File (root.getAbsolutePath() + VOT_DIR );
                 dir.mkdirs();
                 String fileName = new File(nameToFSPath.get(item)).getName();
-                File localFile = new File(dir.getAbsolutePath() + fileName);
+                File localFile = new File(dir.getAbsolutePath() + "/" + fileName);
                 Log.d(TAG, "Listview downloading file: " + localFile.getAbsolutePath());
 
+                // Download video if it isn't local.
                 if(!localFile.exists()) {
                     // TODO(paulmolloy): do progress indicator.
                     Misc.toast("Vot " + item + " is not stored locally downloading...", getContext());
@@ -122,9 +121,9 @@ public class TabDiaryFragment extends Fragment {
                     vidRef.getFile(localFile).addOnSuccessListener(new OnSuccessListener<FileDownloadTask.TaskSnapshot>() {
                         @Override
                         public void onSuccess(FileDownloadTask.TaskSnapshot taskSnapshot) {
-                            // Local temp file has been created
-
-                            Uri uri = Uri.parse(localFile.getAbsolutePath()); //Declare your url here.
+                            // Local vot file has been created.
+                            uri = Uri.fromFile(localFile);
+                            ; //Declare your url here.
                             mVideoView.setVideoURI(uri);
                             mVideoView.requestFocus();
                             mVideoView.start();
@@ -141,10 +140,13 @@ public class TabDiaryFragment extends Fragment {
 
                         }
                     });
+
                 }else{
+                    // Play the video in the VideoView.
                     Uri uri = Uri.parse(localFile.getAbsolutePath()); //Declare your url here.
                     mVideoView.setVideoURI(uri);
                     mVideoView.requestFocus();
+
                     mVideoView.start();
                 }
 
