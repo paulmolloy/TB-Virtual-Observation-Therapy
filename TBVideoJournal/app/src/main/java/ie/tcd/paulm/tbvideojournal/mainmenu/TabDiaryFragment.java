@@ -3,6 +3,7 @@ package ie.tcd.paulm.tbvideojournal.mainmenu;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
+import android.support.annotation.NonNull;
 import android.support.design.widget.TabLayout;
 import android.support.v4.app.Fragment;
 import android.util.Log;
@@ -16,7 +17,17 @@ import android.widget.MediaController;
 import android.widget.Toast;
 import android.widget.VideoView;
 
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.firebase.storage.FileDownloadTask;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.StorageReference;
+
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.nio.channels.FileChannel;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -42,6 +53,7 @@ public class TabDiaryFragment extends Fragment {
     ArrayAdapter<String> arrayAdapter;
     private ListView votsLV;
     private Map<String, String> nameToFSPath;
+    private FirebaseStorage storage;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -52,8 +64,6 @@ public class TabDiaryFragment extends Fragment {
         VideoView mVideoView  = (VideoView)v.findViewById(R.id.last_video);
         mVideoView.setMediaController(new MediaController(getContext()));
         mVideoView.setVideoURI(uri);
-        mVideoView.requestFocus();
-        mVideoView.start();
 
         // Fill ListView with the vot video labels.
         FSVotVideoRef.downloadVotReferences(Auth.getCurrentUserID(),
@@ -92,12 +102,75 @@ public class TabDiaryFragment extends Fragment {
                 String item = (String) votsLV.getItemAtPosition(position);
                 Misc.toast("You selected: " + item, getContext());
                 Log.d(TAG, "You selected: " + item);
+
+                // Download video if it isn't local.
+                storage = FirebaseStorage.getInstance();
+                StorageReference storageRef = storage.getReference();
+                StorageReference vidRef = storageRef.child(nameToFSPath.get(item));
+
+                File root = Environment.getExternalStorageDirectory();
+                File dir = new File (root.getAbsolutePath() + VOT_DIR );
+                dir.mkdirs();
+                String fileName = new File(nameToFSPath.get(item)).getName();
+                File localFile = new File(dir.getAbsolutePath() + fileName);
+                Log.d(TAG, "Listview downloading file: " + localFile.getAbsolutePath());
+
+                if(!localFile.exists()) {
+                    // TODO(paulmolloy): do progress indicator.
+                    Misc.toast("Vot " + item + " is not stored locally downloading...", getContext());
+
+                    vidRef.getFile(localFile).addOnSuccessListener(new OnSuccessListener<FileDownloadTask.TaskSnapshot>() {
+                        @Override
+                        public void onSuccess(FileDownloadTask.TaskSnapshot taskSnapshot) {
+                            // Local temp file has been created
+
+                            Uri uri = Uri.parse(localFile.getAbsolutePath()); //Declare your url here.
+                            mVideoView.setVideoURI(uri);
+                            mVideoView.requestFocus();
+                            mVideoView.start();
+
+
+                        }
+                    }).addOnFailureListener(new OnFailureListener() {
+                        @Override
+                        public void onFailure(@NonNull Exception exception) {
+                            // Handle any errors
+                            Misc.toast("Failed to download video:" + item, getContext());
+                            Log.e(TAG, "Failed to download video: " + exception);
+
+
+                        }
+                    });
+                }else{
+                    Uri uri = Uri.parse(localFile.getAbsolutePath()); //Declare your url here.
+                    mVideoView.setVideoURI(uri);
+                    mVideoView.requestFocus();
+                    mVideoView.start();
+                }
+
             }
-            
+
         });
 
 
 
         return v;
+    }
+
+    public static void copyFile(File src, File dst) throws IOException
+    {
+        FileChannel inChannel = new FileInputStream(src).getChannel();
+        FileChannel outChannel = new FileOutputStream(dst).getChannel();
+        try
+        {
+            inChannel.transferTo(0, inChannel.size(), outChannel);
+        }
+        finally
+        {
+            if (inChannel != null)
+                inChannel.close();
+            if (outChannel != null)
+                outChannel.close();
+        }
     }
 }
