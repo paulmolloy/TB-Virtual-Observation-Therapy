@@ -21,6 +21,7 @@ import android.view.SurfaceView;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
+import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
@@ -82,6 +83,8 @@ public class VotCamera extends Fragment implements CameraBridgeViewBase.CvCamera
     private MediaProjectionManager mProjectionManager;
     private boolean recording = false;
     private int VIDEO_BITRATE = 512 * 1000;// 40000;
+    private ProgressBar mProgressBar;
+
 
 
 
@@ -133,7 +136,7 @@ public class VotCamera extends Fragment implements CameraBridgeViewBase.CvCamera
         dir.mkdirs();
 
         steps.onAllPillsTaken(() -> {
-            Misc.toast("All pills taken! (Will add UI for this in a bit)", getContext());
+            Misc.toast("All pills taken! Uploading Vot (Will add UI for this in a bit)", getContext());
             if(recording) {
                 stopRecording();
                 recording = false;
@@ -158,6 +161,10 @@ public class VotCamera extends Fragment implements CameraBridgeViewBase.CvCamera
         mMediaRecorder = new MediaRecorder();
 
         mProjectionManager = (MediaProjectionManager) getContext().getSystemService(Context.MEDIA_PROJECTION_SERVICE);
+
+        mProgressBar = view.findViewById(R.id.upload_progressbar);
+        mProgressBar.setIndeterminate(false);
+        mProgressBar.setVisibility(View.GONE);     // To Hide ProgressBar
 
 
         return view;
@@ -361,6 +368,7 @@ public class VotCamera extends Fragment implements CameraBridgeViewBase.CvCamera
         Uri file = Uri.fromFile(new File(videoFilePath)); //Declare your url here.
         UploadTask uploadTask = videoRef.putFile(file);
         Log.d(TAG, "Uploading to : " + videoRef.getPath());
+        mProgressBar.setVisibility(View.VISIBLE);  //To show ProgressBar
 
         // Register observers to listen for when the download is done or if it fails
         uploadTask.addOnFailureListener(new OnFailureListener() {
@@ -378,6 +386,8 @@ public class VotCamera extends Fragment implements CameraBridgeViewBase.CvCamera
                 Log.d(TAG, "Upload finished location: " + videoRef.getPath());
                 // TODO(paulmolloy): Save reference to it in Firestore
                 FSVotVideoRef.addVideoReference(videoRef.getPath(), "TB Vot on " + genCurDateString());
+                mProgressBar.setVisibility(View.GONE);  //To show ProgressBar
+
 
             }
         }).addOnProgressListener(new OnProgressListener<UploadTask.TaskSnapshot>() {
@@ -385,6 +395,7 @@ public class VotCamera extends Fragment implements CameraBridgeViewBase.CvCamera
             public void onProgress(UploadTask.TaskSnapshot taskSnapshot) {
                 double progress = (100.0 * taskSnapshot.getBytesTransferred()) / taskSnapshot.getTotalByteCount();
                 Log.d(TAG, "Upload is " + progress + "% done");
+                mProgressBar.setProgress((int) Math.round(progress));
             }
         });
 
