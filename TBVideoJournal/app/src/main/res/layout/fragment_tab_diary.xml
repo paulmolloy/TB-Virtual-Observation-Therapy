@@ -8,10 +8,21 @@
         android:layout_height="match_parent"
         android:orientation="vertical">
 
+        <ProgressBar
+            android:id="@+id/download_progressbar"
+            style="?android:attr/progressBarStyleHorizontal"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:backgroundTint="@color/colorPrimary"
+            android:indeterminate="true"
+            android:indeterminateTint="@color/colorAccent"
+            android:max="100"
+            android:layout_marginTop="-7dp" />
+
         <VideoView
-        android:id="@+id/last_video"
-        android:layout_width="434dp"
-        android:layout_height="254dp" />
+            android:id="@+id/last_video"
+            android:layout_width="434dp"
+            android:layout_height="254dp" />
 
         <ListView
             android:layout_width="match_parent"
