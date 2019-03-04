@@ -25,9 +25,11 @@ import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
+import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 
+import com.google.android.gms.tasks.Task;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.OnProgressListener;
 import com.google.firebase.storage.StorageReference;
@@ -39,6 +41,7 @@ import org.opencv.imgproc.Imgproc;
 
 import java.io.File;
 
+import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
@@ -364,40 +367,72 @@ public class VotCamera extends Fragment implements CameraBridgeViewBase.CvCamera
         FirebaseStorage storage = FirebaseStorage.getInstance();
         StorageReference storageRef = storage.getReference();
         StorageReference videoRef = storageRef.child(FIREBASE_VOT_DIR + Auth.getCurrentUserID() + FIREBASE_FILENAME + genCurDateString() + ".mp4");
-
-        Uri file = Uri.fromFile(new File(videoFilePath)); //Declare your url here.
-        UploadTask uploadTask = videoRef.putFile(file);
-        Log.d(TAG, "Uploading to : " + videoRef.getPath());
         mProgressBar.setVisibility(View.VISIBLE);  //To show ProgressBar
-
-        // Register observers to listen for when the download is done or if it fails
-        uploadTask.addOnFailureListener(new OnFailureListener() {
+        File lastVotFile = new File(videoFilePath);
+        Uri lastVotUri = Uri.fromFile(lastVotFile); //Declare your url here.
+        videoRef.getDownloadUrl().addOnCompleteListener(new OnCompleteListener<Uri>() {
             @Override
-            public void onFailure(@NonNull Exception exception) {
-                // Handle unsuccessful uploads
-            }
-        }).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
-            @Override
-            public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
-                // taskSnapshot.getMetadata() contains file metadata such as size, content-type, etc.
-                // ...
-                Log.d(TAG, "Uploaded your vot successfully" );
-                Misc.toast("Uploaded your vot successfully", getContext());
-                Log.d(TAG, "Upload finished location: " + videoRef.getPath());
-                // TODO(paulmolloy): Save reference to it in Firestore
-                FSVotVideoRef.addVideoReference(videoRef.getPath(), "TB Vot on " + genCurDateString());
-                mProgressBar.setVisibility(View.GONE);  //To show ProgressBar
+            public void onComplete(@NonNull Task<Uri> task) {
+                boolean isOverwrite;
+                if(task.isSuccessful()){
+                    // Got the download URL for /me/profile.png'
+                    // File Exists user has already uploaded a vot today, will overwrite.
+                    // No need to add a reference as one already exists.
+                    isOverwrite = true;
+                }else{
 
+                    // File doesn't exist: This is the users first vot attempt today
+                    // Video reference will need to be created.
+                    isOverwrite = false;
+                }
+
+                UploadTask uploadTask = videoRef.putFile(lastVotUri);
+                Log.d(TAG, "Uploading to : " + videoRef.getPath());
+
+                // Register observers to listen for when the download is done or if it fails
+                uploadTask.addOnFailureListener(new OnFailureListener() {
+                    @Override
+                    public void onFailure(@NonNull Exception exception) {
+                        // Handle unsuccessful uploads
+                        Log.d(TAG, "Video upload failed: " + exception);
+                        mProgressBar.setVisibility(View.GONE);  //To show ProgressBar
+                    }
+                }).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
+                    @Override
+                    public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
+                        // taskSnapshot.getMetadata() contains file metadata such as size, content-type, etc.
+                        // ...
+                        Log.d(TAG, "Uploaded your vot successfully" );
+                        Misc.toast("Uploaded your vot successfully", getContext());
+                        Log.d(TAG, "Upload finished location: " + videoRef.getPath());
+                        // TODO(paulmolloy): Save reference to it in Firestore
+                        Log.d(TAG, "isOverwrite: " + isOverwrite);
+                        if(!isOverwrite) FSVotVideoRef.addVideoReference(videoRef.getPath(), "TB Vot on " + genCurDateString());
+                        String fileName = videoRef.getName();
+                        File localFile = new File(Environment.getExternalStorageDirectory().getAbsolutePath()
+                                + VOT_DIR + fileName);
+                        // Copy file locally to final location from its temp location to avoid
+                        // having to fetch it from Firebase using up bandwidth.
+                        try {
+                            Misc.copyFile(lastVotFile, localFile);
+                        } catch(IOException e) {
+                            Log.e(TAG, "Failed to copy latest vot locally" + e);
+                        }
+                        mProgressBar.setVisibility(View.GONE);  //To show ProgressBar
+                    }
+                }).addOnProgressListener(new OnProgressListener<UploadTask.TaskSnapshot>() {
+                    @Override
+                    public void onProgress(UploadTask.TaskSnapshot taskSnapshot) {
+                        double progress = (100.0 * taskSnapshot.getBytesTransferred()) / taskSnapshot.getTotalByteCount();
+                        Log.d(TAG, "Upload is " + progress + "% done");
+                        mProgressBar.setProgress((int) Math.round(progress));
+                    }
+                });
 
             }
-        }).addOnProgressListener(new OnProgressListener<UploadTask.TaskSnapshot>() {
-            @Override
-            public void onProgress(UploadTask.TaskSnapshot taskSnapshot) {
-                double progress = (100.0 * taskSnapshot.getBytesTransferred()) / taskSnapshot.getTotalByteCount();
-                Log.d(TAG, "Upload is " + progress + "% done");
-                mProgressBar.setProgress((int) Math.round(progress));
-            }
-        });
+        }
+        );
+
 
 
     }
