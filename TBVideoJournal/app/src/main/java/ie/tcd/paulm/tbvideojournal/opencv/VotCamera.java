@@ -254,7 +254,6 @@ public class VotCamera extends Fragment implements CameraBridgeViewBase.CvCamera
         if (mMediaProjection == null) {
             // This asks for user permissions to capture the screen
             startActivityForResult(mProjectionManager.createScreenCaptureIntent(), CAST_PERMISSION_CODE);
-
             return;
         }
         mVirtualDisplay = createVirtualDisplay();
@@ -322,8 +321,9 @@ public class VotCamera extends Fragment implements CameraBridgeViewBase.CvCamera
             return;
         }
         if (resultCode != RESULT_OK) {
-            Log.d(TAG, "Screen Cast Permission Denied");
-
+            Log.d(TAG, "Screen Cast Permission Denied ask again");
+            Misc.toast("Screen Cast Denied, this is needed to record your VOT.", getContext());
+            startActivityForResult(mProjectionManager.createScreenCaptureIntent(), CAST_PERMISSION_CODE);
             return;
         }
         mMediaProjection = mProjectionManager.getMediaProjection(resultCode, data);
