@@ -41,6 +41,7 @@ import org.opencv.imgproc.Imgproc;
 
 import java.io.File;
 
+import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
@@ -367,8 +368,8 @@ public class VotCamera extends Fragment implements CameraBridgeViewBase.CvCamera
         StorageReference storageRef = storage.getReference();
         StorageReference videoRef = storageRef.child(FIREBASE_VOT_DIR + Auth.getCurrentUserID() + FIREBASE_FILENAME + genCurDateString() + ".mp4");
         mProgressBar.setVisibility(View.VISIBLE);  //To show ProgressBar
-
-        Uri file = Uri.fromFile(new File(videoFilePath)); //Declare your url here.
+        File lastVotFile = new File(videoFilePath);
+        Uri lastVotUri = Uri.fromFile(lastVotFile); //Declare your url here.
         videoRef.getDownloadUrl().addOnCompleteListener(new OnCompleteListener<Uri>() {
             @Override
             public void onComplete(@NonNull Task<Uri> task) {
@@ -385,7 +386,7 @@ public class VotCamera extends Fragment implements CameraBridgeViewBase.CvCamera
                     isOverwrite = false;
                 }
 
-                UploadTask uploadTask = videoRef.putFile(file);
+                UploadTask uploadTask = videoRef.putFile(lastVotUri);
                 Log.d(TAG, "Uploading to : " + videoRef.getPath());
 
                 // Register observers to listen for when the download is done or if it fails
@@ -406,6 +407,16 @@ public class VotCamera extends Fragment implements CameraBridgeViewBase.CvCamera
                         // TODO(paulmolloy): Save reference to it in Firestore
                         Log.d(TAG, "isOverwrite: " + isOverwrite);
                         if(!isOverwrite) FSVotVideoRef.addVideoReference(videoRef.getPath(), "TB Vot on " + genCurDateString());
+                        String fileName = videoRef.getName();
+                        File localFile = new File(Environment.getExternalStorageDirectory().getAbsolutePath()
+                                + VOT_DIR + fileName);
+                        // Copy file locally to final location from its temp location to avoid
+                        // having to fetch it from Firebase using up bandwidth.
+                        try {
+                            Misc.copyFile(lastVotFile, localFile);
+                        } catch(IOException e) {
+                            Log.e(TAG, "Failed to copy latest vot locally" + e);
+                        }
                         mProgressBar.setVisibility(View.GONE);  //To show ProgressBar
                     }
                 }).addOnProgressListener(new OnProgressListener<UploadTask.TaskSnapshot>() {

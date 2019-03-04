@@ -114,6 +114,7 @@ public class TabDiaryFragment extends Fragment {
                 Log.d(TAG, "Listview downloading file: " + localFile.getAbsolutePath());
 
                 // Download video if it isn't local.
+                // TODO(paulmolloy): Download video if local video is older than the firebase video.
                 if(!localFile.exists()) {
                     // TODO(paulmolloy): do progress indicator.
                     Misc.toast("Vot " + item + " is not stored locally downloading...", getContext());
@@ -159,20 +160,5 @@ public class TabDiaryFragment extends Fragment {
         return v;
     }
 
-    public static void copyFile(File src, File dst) throws IOException
-    {
-        FileChannel inChannel = new FileInputStream(src).getChannel();
-        FileChannel outChannel = new FileOutputStream(dst).getChannel();
-        try
-        {
-            inChannel.transferTo(0, inChannel.size(), outChannel);
-        }
-        finally
-        {
-            if (inChannel != null)
-                inChannel.close();
-            if (outChannel != null)
-                outChannel.close();
-        }
-    }
+
 }
