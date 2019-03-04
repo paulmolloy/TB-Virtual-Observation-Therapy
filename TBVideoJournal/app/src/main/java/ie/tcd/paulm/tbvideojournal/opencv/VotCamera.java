@@ -395,7 +395,6 @@ public class VotCamera extends Fragment implements CameraBridgeViewBase.CvCamera
                     public void onFailure(@NonNull Exception exception) {
                         // Handle unsuccessful uploads
                         Log.d(TAG, "Video upload failed: " + exception);
-                        mProgressBar.setVisibility(View.GONE);  //To show ProgressBar
                     }
                 }).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
                     @Override

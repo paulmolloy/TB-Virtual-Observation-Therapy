@@ -13,17 +13,19 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.MediaController;
-import android.widget.ProgressBar;
 import android.widget.VideoView;
 
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.storage.FileDownloadTask;
 import com.google.firebase.storage.FirebaseStorage;
-import com.google.firebase.storage.OnProgressListener;
 import com.google.firebase.storage.StorageReference;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.nio.channels.FileChannel;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -47,7 +49,6 @@ public class TabDiaryFragment extends Fragment {
     private Map<String, String> nameToFSPath;
     private FirebaseStorage storage;
     private Uri uri;
-    private ProgressBar mProgressBar;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -61,10 +62,6 @@ public class TabDiaryFragment extends Fragment {
             uri = Uri.fromFile(localFile);
             mVideoView.setVideoURI(uri);
         }
-
-        mProgressBar = v.findViewById(R.id.download_progressbar);
-        mProgressBar.setIndeterminate(false);
-        mProgressBar.setVisibility(View.GONE);  //To hide ProgressBar
 
         // Fill ListView with the vot video labels.
         FSVotVideoRef.downloadVotReferences(Auth.getCurrentUserID(),
@@ -118,9 +115,8 @@ public class TabDiaryFragment extends Fragment {
 
                 // Download video if it isn't local.
                 // TODO(paulmolloy): Download video if local video is older than the firebase video.
-                // Will probably require a date field to be in the votVideoRefs.
                 if(!localFile.exists()) {
-                    mProgressBar.setVisibility(View.VISIBLE);  //To show ProgressBar
+                    // TODO(paulmolloy): do progress indicator.
                     Misc.toast("Vot " + item + " is not stored locally downloading...", getContext());
 
                     vidRef.getFile(localFile).addOnSuccessListener(new OnSuccessListener<FileDownloadTask.TaskSnapshot>() {
@@ -132,8 +128,6 @@ public class TabDiaryFragment extends Fragment {
                             mVideoView.setVideoURI(uri);
                             mVideoView.requestFocus();
                             mVideoView.start();
-                            mProgressBar.setVisibility(View.GONE);  //To show ProgressBar
-
 
 
                         }
@@ -144,13 +138,7 @@ public class TabDiaryFragment extends Fragment {
                             Misc.toast("Failed to download video:" + item, getContext());
                             Log.e(TAG, "Failed to download video: " + exception);
 
-                        }
-                    }).addOnProgressListener(new OnProgressListener<FileDownloadTask.TaskSnapshot>() {
-                        @Override
-                        public void onProgress(FileDownloadTask.TaskSnapshot taskSnapshot) {
-                            double progress = (100.0 * taskSnapshot.getBytesTransferred()) / taskSnapshot.getTotalByteCount();
-                            Log.d(TAG, "Upload is " + progress + "% done");
-                            mProgressBar.setProgress((int) Math.round(progress));
+
                         }
                     });
 
@@ -159,6 +147,7 @@ public class TabDiaryFragment extends Fragment {
                     Uri uri = Uri.parse(localFile.getAbsolutePath()); //Declare your url here.
                     mVideoView.setVideoURI(uri);
                     mVideoView.requestFocus();
+
                     mVideoView.start();
                 }
 
