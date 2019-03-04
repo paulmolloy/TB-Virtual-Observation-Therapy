@@ -6,6 +6,7 @@
     android:layout_height="match_parent">
     tools:context=".mainmenu.TabVideoFragment">
 
+
     <TextView
         android:id="@+id/textView"
         android:layout_width="wrap_content"
@@ -13,11 +14,45 @@
         android:layout_centerInParent="true"
         android:textAppearance="?android:attr/textAppearanceLarge"/>
 
+
+    <TextView
+        android:id="@+id/MainMenu_taken_today"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:layout_marginTop="30dp"
+        android:layout_marginLeft="12dp"
+        android:textSize="18dp"
+        android:text="Taken today: "
+        android:layout_below="@id/MainMenu_name"
+        />
+
+    <TextView
+        android:id="@+id/MainMenu_time_to_take"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="12dp"
+        android:textSize="18dp"
+        android:text="Time to take prescription: "
+        android:layout_below="@id/MainMenu_taken_today"
+        />
+
+    <TextView
+        android:id="@+id/MainMenu_streak"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="12dp"
+        android:textSize="18dp"
+        android:text="Current streak: "
+        android:layout_below="@id/MainMenu_time_to_take"
+        />
+
     <Button
         android:id="@+id/MainMenu_vot"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="12dp"
+        android:layout_marginBottom="8dp"
+        android:layout_alignParentBottom="true"
         android:text="Record Video Observed Treatment for today"
         android:layout_centerHorizontal="true"
 
