@@ -21,7 +21,6 @@ import android.view.SurfaceView;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
-import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
@@ -51,7 +50,8 @@ import ie.tcd.paulm.tbvideojournal.R;
 import ie.tcd.paulm.tbvideojournal.auth.Auth;
 import ie.tcd.paulm.tbvideojournal.firestore.FSVotVideoRef;
 import ie.tcd.paulm.tbvideojournal.misc.Misc;
-import ie.tcd.paulm.tbvideojournal.steps.PillIntakeSteps;
+import ie.tcd.paulm.tbvideojournal.steps.PillIntakeGuide;
+import kotlin.Unit;
 
 import static android.app.Activity.RESULT_OK;
 
@@ -86,7 +86,7 @@ public class VotCamera extends Fragment implements CameraBridgeViewBase.CvCamera
     private MediaProjectionManager mProjectionManager;
     private boolean recording = false;
     private int VIDEO_BITRATE = 512 * 1000;// 40000;
-    private ProgressBar mProgressBar;
+    private PillIntakeGuide guide;
 
 
 
@@ -126,7 +126,7 @@ public class VotCamera extends Fragment implements CameraBridgeViewBase.CvCamera
         currentTime = 1000;
         fpsTextView = (TextView) view.findViewById(R.id.fps_tv);
 
-        PillIntakeSteps steps = new PillIntakeSteps((MainActivity)getActivity(), (RelativeLayout)view);
+        guide = new PillIntakeGuide((MainActivity)getActivity(), (RelativeLayout)view);
         File root = Environment.getExternalStorageDirectory();
 
         // TODO(paulmolloy) write to apps internal dir for more privacy.
@@ -138,17 +138,16 @@ public class VotCamera extends Fragment implements CameraBridgeViewBase.CvCamera
         Log.d(TAG, "Full file path: " + dir.getAbsolutePath());
         dir.mkdirs();
 
-        steps.onAllPillsTaken(() -> {
-            Misc.toast("All pills taken! Uploading Vot (Will add UI for this in a bit)", getContext());
+        guide.onAllPillsTaken(() -> {
             if(recording) {
                 stopRecording();
                 recording = false;
                 saveVotFirebase(Environment.getExternalStorageDirectory().getAbsolutePath()
                         + VOT_DIR + VOT_SCREEN_RECORD_VIDEO_FILENAME + ".mp4");
             }
-
+            return Unit.INSTANCE;
         });
-        steps.onStepChanged((step, pill) -> {
+        guide.onStepChanged((step, pill) -> {
             // Misc.toast("Now on pill " + pill + ", step " + step, getContext(), true);
             // TODO(paulmolloy): Record Timestamps here.
             if( !recording) {
@@ -156,19 +155,16 @@ public class VotCamera extends Fragment implements CameraBridgeViewBase.CvCamera
                 startRecording();
                 recording = true;
             }
-
+            return Unit.INSTANCE;
         });
+
+
 
         mDisplayMetrics= new DisplayMetrics();
         getActivity().getWindowManager().getDefaultDisplay().getMetrics(mDisplayMetrics);
         mMediaRecorder = new MediaRecorder();
 
         mProjectionManager = (MediaProjectionManager) getContext().getSystemService(Context.MEDIA_PROJECTION_SERVICE);
-
-        mProgressBar = view.findViewById(R.id.upload_progressbar);
-        mProgressBar.setIndeterminate(false);
-        mProgressBar.setVisibility(View.GONE);     // To Hide ProgressBar
-
 
         return view;
     }
@@ -367,7 +363,6 @@ public class VotCamera extends Fragment implements CameraBridgeViewBase.CvCamera
         FirebaseStorage storage = FirebaseStorage.getInstance();
         StorageReference storageRef = storage.getReference();
         StorageReference videoRef = storageRef.child(FIREBASE_VOT_DIR + Auth.getCurrentUserID() + FIREBASE_FILENAME + genCurDateString() + ".mp4");
-        mProgressBar.setVisibility(View.VISIBLE);  //To show ProgressBar
         File lastVotFile = new File(videoFilePath);
         Uri lastVotUri = Uri.fromFile(lastVotFile); //Declare your url here.
         videoRef.getDownloadUrl().addOnCompleteListener(new OnCompleteListener<Uri>() {
@@ -395,13 +390,14 @@ public class VotCamera extends Fragment implements CameraBridgeViewBase.CvCamera
                     public void onFailure(@NonNull Exception exception) {
                         // Handle unsuccessful uploads
                         Log.d(TAG, "Video upload failed: " + exception);
-                        mProgressBar.setVisibility(View.GONE);  //To show ProgressBar
+                        // mProgressBar.setVisibility(View.GONE);  //To show ProgressBar
                     }
                 }).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
                     @Override
                     public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
                         // taskSnapshot.getMetadata() contains file metadata such as size, content-type, etc.
                         // ...
+                        guide.setUploadProgress(100);
                         Log.d(TAG, "Uploaded your vot successfully" );
                         Misc.toast("Uploaded your vot successfully", getContext());
                         Log.d(TAG, "Upload finished location: " + videoRef.getPath());
@@ -418,14 +414,13 @@ public class VotCamera extends Fragment implements CameraBridgeViewBase.CvCamera
                         } catch(IOException e) {
                             Log.e(TAG, "Failed to copy latest vot locally" + e);
                         }
-                        mProgressBar.setVisibility(View.GONE);  //To show ProgressBar
                     }
                 }).addOnProgressListener(new OnProgressListener<UploadTask.TaskSnapshot>() {
                     @Override
                     public void onProgress(UploadTask.TaskSnapshot taskSnapshot) {
                         double progress = (100.0 * taskSnapshot.getBytesTransferred()) / taskSnapshot.getTotalByteCount();
                         Log.d(TAG, "Upload is " + progress + "% done");
-                        mProgressBar.setProgress((int) Math.round(progress));
+                        guide.setUploadProgress((int)Math.round(progress));
                     }
                 });
 
