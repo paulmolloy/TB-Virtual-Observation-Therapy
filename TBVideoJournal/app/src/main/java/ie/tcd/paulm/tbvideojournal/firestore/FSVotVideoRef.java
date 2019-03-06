@@ -5,9 +5,12 @@ import android.util.Log;
 
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.firebase.Timestamp;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
+import com.google.firebase.firestore.ServerTimestamp;
+import com.google.type.Date;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -17,28 +20,25 @@ import ie.tcd.paulm.tbvideojournal.auth.Auth;
 public class FSVotVideoRef {
     public String videoPath;
     public String label;
-    // TODO(edvardas): Add timestamp data-structure here.
+    public Object timestampsAndConfidences;
+    @ServerTimestamp Timestamp timestamp; // This will be automatically set by the server when the document gets uploaded
     private static final String  TAG              = "FSVotVideoRef";
     public static final String VOT_PART_PATH = "/votVideoRefs";
 
     // addVideoReference saves a reference to every vot video a patient has made.
     // It keeps the path in Firebase Storage, human redable label for video, and will have
     // VoT section timestamps datastructure.
-    public static void addVideoReference(String videoPath, String label){
+    public static void addVideoReference(String documentID, String videoPath, String label, Object timestamps){
         // Add a new document with a generated ID
 
         FirebaseFirestore db = FirebaseFirestore.getInstance();
         FSVotVideoRef vot = new FSVotVideoRef();
         vot.videoPath = videoPath;
         vot.label = label;
-        db.collection("patients/" + Auth.getCurrentUserID() + VOT_PART_PATH)
-                .add(vot)
-                .addOnSuccessListener(new OnSuccessListener<DocumentReference>() {
-                    @Override
-                    public void onSuccess(DocumentReference documentReference) {
-                        Log.d(TAG, "DocumentSnapshot added with ID: " + documentReference.getId());
-                    }
-                })
+        vot.timestampsAndConfidences = timestamps;
+        db.document("patients/" + Auth.getCurrentUserID() + VOT_PART_PATH + "/" + documentID)
+                .set(vot)
+                .addOnSuccessListener(r -> Log.d(TAG, "Document " + documentID + " has been uploaded"))
                 .addOnFailureListener(new OnFailureListener() {
                     @Override
                     public void onFailure(@NonNull Exception e) {
@@ -57,7 +57,8 @@ public class FSVotVideoRef {
                         FSVotVideoRef vot = new FSVotVideoRef();
                         vot.videoPath = doc.getString("videoPath");
                         vot.label = doc.getString("label");
-                        // TODO(edvardas): Get timestamps here.
+                        vot.timestampsAndConfidences = doc.get("timestampsAndConfidences");
+                        vot.timestamp = doc.getTimestamp("timestamp");
                         vots.add(vot);
                     }
                     onSuccess.run(vots);

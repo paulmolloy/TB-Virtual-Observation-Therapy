@@ -8,6 +8,7 @@ import android.widget.*
 import ie.tcd.paulm.tbvideojournal.R
 import android.animation.ObjectAnimator
 import android.view.animation.DecelerateInterpolator
+import java.time.Instant
 
 
 class PillIntakeGuide(private val root: MainActivity, private val cameraScreen: RelativeLayout) {
@@ -28,10 +29,10 @@ class PillIntakeGuide(private val root: MainActivity, private val cameraScreen: 
 
     // Define all the steps
     private val steps = arrayOf(
-        StepDescription(1, R.drawable.step_1, "Place pill into circle"),
-        StepDescription(2, R.drawable.step_2, "Place pill in mouth"),
-        StepDescription(3, R.drawable.step_3, "Swallow pill"),
-        StepDescription(4, R.drawable.step_4, "Show empty mouth")
+        StepDescription(R.drawable.step_1, "Place pill into circle"),
+        StepDescription(R.drawable.step_2, "Place pill in mouth"),
+        StepDescription(R.drawable.step_3, "Swallow pill"),
+        StepDescription(R.drawable.step_4, "Show empty mouth")
     )
 
     // This will eventually be downloaded from Firebase
@@ -51,8 +52,12 @@ class PillIntakeGuide(private val root: MainActivity, private val cameraScreen: 
     private val currentStepsDescription get() = steps[currentStep]
     private val currentPillsUI get() = progresses[currentPill]
 
-    private var onStepChangedListener = { pillNumber: Int, stepNumber: Int -> }
-    private var onFinishedListener = { }
+    private var onStepStartedListener = { pillNumber: Int, stepNumber: Int -> }
+    private var onStepCompletedListener = { pillNumber: Int, stepNumber: Int -> 0f }
+    private var onFinishedListener = { timestamps: Any -> }
+
+    private val stepTimestamps = StepTimestamps()
+    private var recordingStartedAt = -1L
 
     init {
 
@@ -73,28 +78,15 @@ class PillIntakeGuide(private val root: MainActivity, private val cameraScreen: 
      */
     fun nextStep(){
 
-        currentPillsUI.markAsFinished(currentStep) // Mark current one as done
-        currentCounter++ // Move on to the next step
+        // Finish up with the current step
+        recordThisStepsConfidence()
+        currentPillsUI.markAsFinished(currentStep)
 
-        // Check if the user has taken all their required pills
+        // Move on to the next step
+        currentCounter++
+
         if(haveAllPillsBeenTaken) finished()
-        else {
-
-            currentPillsUI.markAsOngoing(currentStep)
-
-            // Update text and image at the top of the screen
-            val pillName = currentPillsUI.prescription.pillName
-            takingPillName.text = "Taking $pillName"
-
-            stepInstruction.text = currentStepsDescription.instruction
-            stepImage.setImageResource(currentStepsDescription.imageID)
-
-            // Scroll to current pill's progress
-            scrollToView(currentPillsUI.container)
-
-            onStepChangedListener(currentPill, currentStep)
-
-        }
+        else startNewStep()
 
     }
 
@@ -104,14 +96,56 @@ class PillIntakeGuide(private val root: MainActivity, private val cameraScreen: 
         uploadProgressBar.progress = progress
     }
 
-    /** This will be called every time the user moves on to the next step (i.e. when nextStep() is called)  */
-    fun onStepChanged(listener: (pillNumber: Int, stepNumber: Int) -> Unit) {
-        onStepChangedListener = listener
+    /**
+     * This will be called every time a new step starts.
+     * This `onStepCompleted()`, and `onAllPillsTaken()` will always be called in order like so:
+     * ```
+     * onStepStarted(pill0, step0)
+     * onStepCompleted(pill0, step0)
+     * onStepStarted(pill0, step1)
+     * onStepCompleted(pill0, step1)
+     * ...
+     * ...
+     * onStepStarted(pilln, step3)
+     * onStepCompleted(pilln, step3)
+     * onAllPillsTaken()
+     * ```
+     */
+    fun onStepStarted(listener: (pillNumber: Int, stepNumber: Int) -> Unit) {
+        onStepStartedListener = listener
+    }
+
+    /**
+     * This will be called after a step has been completed
+     *
+     * **Note:** It needs to return the confidence value for this step
+     *
+     * This `onStepStarted()`, and `onAllPillsTaken()` will always be called in order like so:
+     * ```
+     * onStepStarted(pill0, step0)
+     * onStepCompleted(pill0, step0)
+     * onStepStarted(pill0, step1)
+     * onStepCompleted(pill0, step1)
+     * ...
+     * ...
+     * onStepStarted(pilln, step3)
+     * onStepCompleted(pilln, step3)
+     * onAllPillsTaken()
+     * ```
+     */
+    fun onStepCompleted(listener: (pillNumber: Int, stepNumber: Int) -> Float){
+        onStepCompletedListener = listener
     }
 
     /** This will be called when the user has taken all the pills they are required to take  */
-    fun onAllPillsTaken(listener: () -> Unit) {
+    fun onAllPillsTaken(listener: (timestamps: Any) -> Unit) {
         onFinishedListener = listener
+    }
+
+    /** Marks right now as the time when the recording began (used to calculate step timestamps) */
+    fun recordingNow(){
+        Misc.toast("Recording video", root);
+        recordingStartedAt = System.currentTimeMillis()
     }
 
 
@@ -119,13 +153,32 @@ class PillIntakeGuide(private val root: MainActivity, private val cameraScreen: 
 
 
 
+    private fun startNewStep(){
 
+        // Record the time when this step started
+        recordThisStepsTimestamp()
 
+        // Mark the current step in the progress ticks as ongoing
+        currentPillsUI.markAsOngoing(currentStep)
+
+        // Update text and image at the top of the screen
+        val pillName = currentPillsUI.prescription.pillName
+        takingPillName.text = "Taking $pillName"
+        stepInstruction.text = currentStepsDescription.instruction
+        stepImage.setImageResource(currentStepsDescription.imageID)
+
+        // Scroll to current pill's progress
+        scrollToView(currentPillsUI.container)
+
+        // Call the onNewStepStarted listener
+        onStepStartedListener(currentPill, currentStep)
+
+    }
 
     private fun finished(){
         cameraScreen.addView(doneScreen)
         uploadProgressBar.isIndeterminate = true
-        onFinishedListener()
+        onFinishedListener(stepTimestamps.map)
     }
 
     private fun scrollToView(view: View){
@@ -147,6 +200,21 @@ class PillIntakeGuide(private val root: MainActivity, private val cameraScreen: 
 
     }
 
+    private fun recordThisStepsTimestamp(){
+        
+        var elapsed = 0
+        if(recordingStartedAt != -1L) elapsed = (System.currentTimeMillis() - recordingStartedAt).toInt()
+        stepTimestamps.setTimestamp(currentPill, currentStep, elapsed)
+
+    }
+
+    private fun recordThisStepsConfidence(){
+        if(currentCounter > 0){
+            val confidence = onStepCompletedListener(currentPill, currentStep)
+            stepTimestamps.setConfidence(currentPill, currentStep, confidence)
+        }
+    }
+
 
     private fun <T : View>find(id: Int) = guideContainer.findViewById<T>(id)
 
@@ -154,5 +222,5 @@ class PillIntakeGuide(private val root: MainActivity, private val cameraScreen: 
 }
 
 data class PillPrescription(val pillName: String, val amount: Int, val color: String = "#FFF")
-data class StepDescription(val stepNumber: Int, val imageID: Int, val instruction: String)
+data class StepDescription(val imageID: Int, val instruction: String)
 

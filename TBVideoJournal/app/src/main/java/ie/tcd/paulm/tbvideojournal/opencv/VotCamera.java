@@ -138,22 +138,26 @@ public class VotCamera extends Fragment implements CameraBridgeViewBase.CvCamera
         Log.d(TAG, "Full file path: " + dir.getAbsolutePath());
         dir.mkdirs();
 
-        guide.onAllPillsTaken(() -> {
-            if(recording) {
-                stopRecording();
-                recording = false;
-                saveVotFirebase(Environment.getExternalStorageDirectory().getAbsolutePath()
-                        + VOT_DIR + VOT_SCREEN_RECORD_VIDEO_FILENAME + ".mp4");
-            }
-            return Unit.INSTANCE;
-        });
-        guide.onStepChanged((step, pill) -> {
-            // Misc.toast("Now on pill " + pill + ", step " + step, getContext(), true);
-            // TODO(paulmolloy): Record Timestamps here.
+        guide.onStepStarted((pill, step) -> {
             if( !recording) {
                 prepareRecording();
                 startRecording();
                 recording = true;
+            }
+            return Unit.INSTANCE;
+        });
+        guide.onStepCompleted((pill, step) -> {
+            float randomConfidence = (float)(0.1f + (Math.random() * 0.9f));
+            return randomConfidence;
+            // ↑ This will eventually need to return the real confidence value that was just calculated for the current step
+        });
+        guide.onAllPillsTaken(timestampsAndConfidences -> {
+            if(recording) {
+                stopRecording();
+                recording = false;
+                String videoSavePath = Environment.getExternalStorageDirectory().getAbsolutePath()
+                        + VOT_DIR + VOT_SCREEN_RECORD_VIDEO_FILENAME + ".mp4";
+                saveVotFirebase(videoSavePath, timestampsAndConfidences);
             }
             return Unit.INSTANCE;
         });
@@ -335,6 +339,7 @@ public class VotCamera extends Fragment implements CameraBridgeViewBase.CvCamera
         mMediaProjection = mProjectionManager.getMediaProjection(resultCode, data);
         mVirtualDisplay = createVirtualDisplay();
         mMediaRecorder.start();
+        guide.recordingNow();
     }
 
     private VirtualDisplay createVirtualDisplay() {
@@ -358,7 +363,7 @@ public class VotCamera extends Fragment implements CameraBridgeViewBase.CvCamera
 
     // Firebase video stuff
 
-    private void saveVotFirebase(String videoFilePath){
+    private void saveVotFirebase(String videoFilePath, Object timestamps){
         // Save video to firebase
         FirebaseStorage storage = FirebaseStorage.getInstance();
         StorageReference storageRef = storage.getReference();
@@ -401,7 +406,13 @@ public class VotCamera extends Fragment implements CameraBridgeViewBase.CvCamera
                         Log.d(TAG, "Upload finished location: " + videoRef.getPath());
                         // TODO(paulmolloy): Save reference to it in Firestore
                         Log.d(TAG, "isOverwrite: " + isOverwrite);
-                        if(!isOverwrite) FSVotVideoRef.addVideoReference(videoRef.getPath(), "TB Vot on " + genCurDateString());
+
+                        // if(!isOverwrite) FSVotVideoRef.addVideoReference(videoRef.getPath(), "TB Vot on " + genCurDateString(), timestamps);
+                        //    ↑   Slightly changing this so that instead today's document is overwritten every time
+                        //        because the time stamps and confidences will change for every video
+                        String date = genCurDateString();
+                        FSVotVideoRef.addVideoReference(date, videoRef.getPath(), "TB Vot on" + date, timestamps);
+
                         String fileName = videoRef.getName();
                         File localFile = new File(Environment.getExternalStorageDirectory().getAbsolutePath()
                                 + VOT_DIR + fileName);
