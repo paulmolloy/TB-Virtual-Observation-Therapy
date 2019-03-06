@@ -22,6 +22,7 @@ public class FSVotVideoRef {
     public String label;
     public Object timestampsAndConfidences;
     @ServerTimestamp Timestamp timestamp; // This will be automatically set by the server when the document gets uploaded
+    public boolean manuallyReviewed;
     private static final String  TAG              = "FSVotVideoRef";
     public static final String VOT_PART_PATH = "/votVideoRefs";
 
@@ -59,6 +60,7 @@ public class FSVotVideoRef {
                         vot.label = doc.getString("label");
                         vot.timestampsAndConfidences = doc.get("timestampsAndConfidences");
                         vot.timestamp = doc.getTimestamp("timestamp");
+                        vot.manuallyReviewed = doc.getBoolean("manuallyReviewed");
                         vots.add(vot);
                     }
                     onSuccess.run(vots);

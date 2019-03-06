@@ -1,0 +1,123 @@
+body {
+    font-family: 'Open Sans', sans-serif;
+    margin: 0; padding: 0;
+    background: rgb(248, 248, 248);
+    display: flex;
+    flex-direction: column;
+}
+
+h1, h2, h3, h4, h5, p {
+    margin: 0; padding: 0;
+}
+
+.green {
+    background: #00564C;
+}
+
+.orange {
+    background: #F8828A;
+}
+
+.heading {
+    margin-left: 3rem;
+    margin-top: 3em;
+    color: #555;
+}
+
+.flex-row {
+
+    display: flex;
+    flex-direction: row;
+
+}
+
+.videos-container {
+
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    margin: 0 2em;
+
+}
+
+#patient-details {
+
+    background: white;
+    align-items: baseline;
+    padding: 30px;
+    box-shadow: 0 2px 5px #DDD;
+    border-radius: 10px;
+    align-self: flex-start;
+    margin-left: 3rem;
+    margin-top: 3rem;
+
+}
+
+#patient-details > p {
+    font-size: 0.85em;
+    color: #555;
+    margin-top: 0.25em;
+}
+
+#patient-details > h2 {
+    color: #555;
+}
+
+#patient-details i {
+    width: 1.5em;
+}
+
+.line {
+    background: #CCC;
+    width: 3rem;
+    height: 0.25rem;
+    margin: 0.75em 0 1.5em 0;
+}
+
+.video-container {
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 2px 5px #DDD;
+    margin: 20px 1%;
+    overflow: hidden;
+
+}
+
+.video-container video {
+
+    width: 200px;
+    height: 355px;
+
+}
+
+.video-container p {
+
+    width: 100%;
+    text-align: center;
+    font-size: 0.75em;
+    margin: 2em 0 1em 0;
+
+}
+
+.video-container i {
+
+    width: 2em;
+
+}
+
+.video-container > div {
+
+    font-size: 0.75em;
+    text-align: center;
+    margin-bottom: 2em;
+    padding: 0.75em 2em 0.75em 1em;
+    cursor: pointer;
+    color: white;
+    font-weight: bold;
+    border-radius: 5em;
+
+}

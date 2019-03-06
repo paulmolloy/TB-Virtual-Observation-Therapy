@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Very Basic Login</title>
+
+    <!-- ↓↓↓ Load all the Firebase dependencies -->
+    <script src="https://www.gstatic.com/firebasejs/5.8.5/firebase.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/5.8.5/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/5.8.5/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/5.8.5/firebase-firestore.js"></script>
+    <script>
+        // Initialize Firebase
+        var config = {
+            apiKey: "AIzaSyAgQbVptjsQH0p-4YgJtaCWIQtXaS_SyhE",
+            authDomain: "tb-vot.firebaseapp.com",
+            databaseURL: "https://tb-vot.firebaseio.com",
+            projectId: "tb-vot",
+            storageBucket: "tb-vot.appspot.com",
+            messagingSenderId: "80680232908"
+        };
+        firebase.initializeApp(config);
+    </script>
+    <!-- ↑↑↑ Load all the Firebase dependencies -->
+    
+
+</head>
+<body>
+    
+    <h1>Login</h1>
+    <h3>This will eventually be replaced with a nicer page</h3>
+    <p>Once the user is signed in, it will redirect them to whatever link you put in the <b>redirect</b> param:</p>
+    <p>For example:</p>
+    <pre>http://34.73.42.71:8080/login?redirect=<b>/videos/g0t2feq6hCVS6u4qaTtqcGa</b></pre>
+    <pre>http://34.73.42.71:8080/login?redirect=<b>https://google.com</b></pre>
+    <pre>http://34.73.42.71:8080/login?redirect=<b>[your link here]</b></pre>
+    <div style="height: 25px" ></div>
+
+    <p>Email:</p>
+    <input id="email" />
+
+    <p>Password:</p>
+    <input id="password" />
+
+    <h1 onclick="signIn()" style="cursor: pointer" >Sign in</h1>
+
+    <p id="message" ></p>
+
+
+</body>
+
+<script>
+
+    function getInputsText(id){
+        return document.getElementById(id).value
+    }
+
+    function setMessage(message){
+        document.getElementById("message").textContent = message
+    }
+
+    function redirect(){
+        setMessage("Redirecting... ")
+        const url = (new URLSearchParams(window.location.search)).get("redirect")
+        window.location.replace(url)
+    }
+    
+    function signIn(){
+
+        var email = getInputsText("email")
+        var password = getInputsText("password")
+
+        setMessage("Signing in...")
+
+        firebase.auth().signInWithEmailAndPassword(email, password)
+            .then(() => redirect())
+            .catch(error => setMessage("Something went wrong: " + error.message))
+        
+    }
+
+</script>
+
+</html>

@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>Videos</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" type="text/css" media="screen" href="/files/videos/videos.css">
+
+    <link href="https://fonts.googleapis.com/css?family=Open+Sans" rel="stylesheet">
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+
+    <!-- ↓↓↓ Load all the Firebase dependencies -->
+    <script src="https://www.gstatic.com/firebasejs/5.8.5/firebase.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/5.8.5/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/5.8.5/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/5.8.5/firebase-firestore.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/5.8.5/firebase-storage.js"></script>
+    <script>
+        // Initialize Firebase
+        var config = {
+            apiKey: "AIzaSyAgQbVptjsQH0p-4YgJtaCWIQtXaS_SyhE",
+            authDomain: "tb-vot.firebaseapp.com",
+            databaseURL: "https://tb-vot.firebaseio.com",
+            projectId: "tb-vot",
+            storageBucket: "tb-vot.appspot.com",
+            messagingSenderId: "80680232908"
+        };
+        firebase.initializeApp(config);
+    </script>
+    <!-- ↑↑↑ Load all the Firebase dependencies -->
+
+
+</head>
+<body>
+
+    <div id="patient-details" >
+        <h2 id="username">...</h2>
+        <div class="line" ></div>
+        <p id="useremail"><i class="fas fa-envelope"></i> ...</p>
+        <p><i class="far fa-calendar"></i> Last upload 1 day ago</p>
+        <p><i class="fas fa-video"></i> 3 videos left to review</p>
+    </div>
+
+    <h2 class="heading" >Not reviewed</h2>
+    <div id="not-reviewed-container" class="videos-container" ></div>
+
+    <h2 class="heading" >Reviewed</h2>
+    <div id="reviewed-container" class="videos-container" ></div>
+
+</body>
+
+<script src="/files/videos/videos.js"></script>
+
+
+</html>

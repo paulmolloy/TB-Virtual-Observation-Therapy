@@ -411,7 +411,7 @@ public class VotCamera extends Fragment implements CameraBridgeViewBase.CvCamera
                         //    ↑   Slightly changing this so that instead today's document is overwritten every time
                         //        because the time stamps and confidences will change for every video
                         String date = genCurDateString();
-                        FSVotVideoRef.addVideoReference(date, videoRef.getPath(), "TB Vot on" + date, timestamps);
+                        FSVotVideoRef.addVideoReference(date, videoRef.getPath(), "TB Vot on " + date, timestamps);
 
                         String fileName = videoRef.getName();
                         File localFile = new File(Environment.getExternalStorageDirectory().getAbsolutePath()

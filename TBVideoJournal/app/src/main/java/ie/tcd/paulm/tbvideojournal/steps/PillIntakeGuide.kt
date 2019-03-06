@@ -144,7 +144,6 @@ class PillIntakeGuide(private val root: MainActivity, private val cameraScreen: 
 
     /** Marks right now as the time when the recording began (used to calculate step timestamps) */
     fun recordingNow(){
-        Misc.toast("Recording video", root);
         recordingStartedAt = System.currentTimeMillis()
     }
 
