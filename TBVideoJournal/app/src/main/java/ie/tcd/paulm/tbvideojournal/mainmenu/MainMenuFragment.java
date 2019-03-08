@@ -30,6 +30,7 @@ public class MainMenuFragment extends Fragment {
 
 
         final ViewPager viewPager = (ViewPager) view.findViewById(R.id.pager);
+        viewPager.setOffscreenPageLimit(2);
         final PagerAdapter adapter = new PagerAdapter
                 (((AppCompatActivity)getActivity()).getSupportFragmentManager(), tabLayout.getTabCount());
         viewPager.setAdapter(adapter);
