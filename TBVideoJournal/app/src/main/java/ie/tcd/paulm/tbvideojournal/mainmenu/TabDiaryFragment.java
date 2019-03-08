@@ -22,10 +22,6 @@ import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.nio.channels.FileChannel;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -58,7 +54,8 @@ public class TabDiaryFragment extends Fragment {
         VideoView mVideoView  = (VideoView) v.findViewById(R.id.last_video);
         mVideoView.setMediaController(new MediaController(getContext()));
         File localFile = new File(root.getAbsolutePath() + VOT_DIR + VOT_SCREEN_RECORD_VIDEO_FILENAME + ".mp4");
-        if(localFile.exists()) {
+        if(localFile.exists() && localFile.length() != 0) {
+            // The file shouldn't ever be empty if it exists here but check anyway.
             uri = Uri.fromFile(localFile);
             mVideoView.setVideoURI(uri);
         }

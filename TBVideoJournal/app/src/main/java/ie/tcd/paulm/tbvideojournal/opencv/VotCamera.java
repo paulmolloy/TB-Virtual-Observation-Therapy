@@ -185,9 +185,16 @@ public class VotCamera extends Fragment implements CameraBridgeViewBase.CvCamera
 
     @Override
     public void onCameraViewStopped() {
-            // colorImage.release();
-            // rotatedColorImage.release();
-            releaseMediaRecorder();
+        // colorImage.release();
+        // rotatedColorImage.release();
+        releaseMediaRecorder();
+        File localFile = new File(Environment.getExternalStorageDirectory().getAbsolutePath() + VOT_DIR + VOT_SCREEN_RECORD_VIDEO_FILENAME + ".mp4");
+        // Delete the file if the user quits the app before it starts recording but after prepare.
+        if(localFile.exists() && localFile.length()==0) {
+            localFile.delete();
+            Log.d(TAG, "Deleted empty file on early quit.");
+        }
+
     }
 
     @Override
@@ -303,7 +310,6 @@ public class VotCamera extends Fragment implements CameraBridgeViewBase.CvCamera
 
         int width = mDisplayMetrics.widthPixels;
         int height = mDisplayMetrics.heightPixels;
-
         mMediaRecorder.setAudioSource(MediaRecorder.AudioSource.MIC);
         mMediaRecorder.setVideoSource(MediaRecorder.VideoSource.SURFACE);
         mMediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4);
