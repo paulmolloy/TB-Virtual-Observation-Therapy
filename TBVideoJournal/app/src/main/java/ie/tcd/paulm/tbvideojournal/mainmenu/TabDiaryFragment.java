@@ -49,10 +49,26 @@ public class TabDiaryFragment extends Fragment {
     private Map<String, String> nameToFSPath;
     private FirebaseStorage storage;
     private Uri uri;
+    private View v;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        View v = inflater.inflate(R.layout.fragment_tab_diary, container, false);
+        v = inflater.inflate(R.layout.fragment_tab_diary, container, false);
+        if(getUserVisibleHint()){ // fragment is visible
+            loadData();
+        }
+        return v;
+    }
+
+    @Override
+    public void setUserVisibleHint(boolean isVisibleToUser) {
+        super.setUserVisibleHint(isVisibleToUser);
+        if (isVisibleToUser && isResumed()) { // fragment is visible and have created
+            loadData();
+        }
+    }
+
+    public void loadData(){
         File root = Environment.getExternalStorageDirectory();
         votsLV = (ListView) v.findViewById(R.id.vots_lv);
         VideoView mVideoView  = (VideoView) v.findViewById(R.id.last_video);
@@ -65,36 +81,36 @@ public class TabDiaryFragment extends Fragment {
 
         // Fill ListView with the vot video labels.
         FSVotVideoRef.downloadVotReferences(Auth.getCurrentUserID(),
-            vots -> {
+                vots -> {
 
-                List<String> votsElements = new ArrayList<String>();
-                nameToFSPath = new HashMap<String, String>();
-                for(FSVotVideoRef vot : vots) {
-                    if(vot.label != null && vot.videoPath != null) {
-                        votsElements.add(vot.label);
-                        nameToFSPath.put(vot.label, vot.videoPath);
-                        Log.d(TAG, "Adding to list: " + vot.label);
+                    List<String> votsElements = new ArrayList<String>();
+                    nameToFSPath = new HashMap<String, String>();
+                    for(FSVotVideoRef vot : vots) {
+                        if(vot.label != null && vot.videoPath != null) {
+                            votsElements.add(vot.label);
+                            nameToFSPath.put(vot.label, vot.videoPath);
+                            Log.d(TAG, "Adding to list: " + vot.label);
+                        }
+
                     }
 
+                    arrayAdapter = new ArrayAdapter<String>(
+                            getContext(),
+                            android.R.layout.simple_list_item_1,
+                            votsElements);
+                    votsLV.setAdapter(arrayAdapter);
+
+                },
+
+                error -> {
+                    Log.e(TAG, "Error retrieving vot video refs: " + error );
                 }
-
-                arrayAdapter = new ArrayAdapter<String>(
-                        getContext(),
-                        android.R.layout.simple_list_item_1,
-                        votsElements);
-                votsLV.setAdapter(arrayAdapter);
-
-            },
-
-            error -> {
-                Log.e(TAG, "Error retrieving vot video refs: " + error );
-            }
 
         );
 
         votsLV.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             public void onItemClick(AdapterView parentView, View childView,
-                                       int position, long id)
+                                    int position, long id)
             {
                 // Select video
                 String item = (String) votsLV.getItemAtPosition(position);
@@ -155,10 +171,6 @@ public class TabDiaryFragment extends Fragment {
 
         });
 
-
-
-        return v;
     }
-
 
 }
