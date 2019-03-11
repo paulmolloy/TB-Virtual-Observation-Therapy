@@ -94,12 +94,22 @@ h1, h2, h3, h4, h5, p {
 
 }
 
+.video-container h5 {
+
+    width: 100%;
+    text-align: center;
+    font-size: 0.85em;
+    margin: 2em 0 0 0;
+
+}
+
 .video-container p {
 
     width: 100%;
     text-align: center;
     font-size: 0.75em;
-    margin: 2em 0 1em 0;
+    margin: 1em 0 1em 0;
+    max-width: 4cm;
 
 }
 
