@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>Patient Graph</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" type="text/css" media="screen" href="../videos/videos.css">
+
+    <link href="https://fonts.googleapis.com/css?family=Open+Sans" rel="stylesheet">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+   
+    <!-- ↓↓↓ Load all the Firebase dependencies -->
+    <script src="https://www.gstatic.com/firebasejs/5.8.5/firebase.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/5.8.5/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/5.8.5/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/5.8.5/firebase-firestore.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/5.8.5/firebase-storage.js"></script>
+    <!-- ↑↑↑ Load all the Firebase dependencies -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+
+</head>
+<body>
+<h2 style="margin: 0 auto; margin-top: 100px;">Patient Graph</h2>
+</body>
+
+<script>
+// Initialize Firebase
+
+
+var config = {
+    apiKey: "AIzaSyAgQbVptjsQH0p-4YgJtaCWIQtXaS_SyhE",
+    authDomain: "tb-vot.firebaseapp.com",
+    databaseURL: "https://tb-vot.firebaseio.com",
+    projectId: "tb-vot",
+    storageBucket: "tb-vot.appspot.com",
+    messagingSenderId: "80680232908"
+};
+var app = firebase.initializeApp(config);
+
+
+</script>
+<script type="text/javascript" src="../graph/graph.js"></script>
+</html>
