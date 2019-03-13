@@ -15,6 +15,7 @@ import android.view.Window;
 import android.view.WindowManager;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.Button;
 import android.widget.ListView;
 import android.widget.MediaController;
 import android.widget.VideoView;
@@ -53,6 +54,7 @@ public class TabDiaryFragment extends Fragment {
     private View v;
     private Dialog videoDialog;
     private VideoView videoView;
+    private Button closeVideoButton;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -62,8 +64,10 @@ public class TabDiaryFragment extends Fragment {
         }
         videoDialog = new Dialog(getActivity());
         videoDialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
-        videoDialog.setContentView(R.layout.view_video_dialog);//add your own xml with defied with and height of videoview
+        videoDialog.setContentView(R.layout.view_video_dialog);
         videoView = (VideoView) videoDialog.findViewById(R.id.last_video_test);
+        closeVideoButton = videoDialog.findViewById(R.id.dialog_close_b);
+
         WindowManager.LayoutParams lp = new WindowManager.LayoutParams(
                 ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         lp.copyFrom(videoDialog.getWindow().getAttributes());
@@ -86,13 +90,11 @@ public class TabDiaryFragment extends Fragment {
     public void loadData(){
         File root = Environment.getExternalStorageDirectory();
         votsLV = (ListView) v.findViewById(R.id.vots_lv);
-        VideoView mVideoView  = (VideoView) v.findViewById(R.id.last_video);
-        mVideoView.setMediaController(new MediaController(getContext()));
         File localFile = new File(root.getAbsolutePath() + VOT_DIR + VOT_SCREEN_RECORD_VIDEO_FILENAME + ".mp4");
         if(localFile.exists() && localFile.length() != 0) {
             // The file shouldn't ever be empty if it exists here but check anyway.
             uri = Uri.fromFile(localFile);
-            mVideoView.setVideoURI(uri);
+            videoView.setVideoURI(uri);
         }
 
         // Fill ListView with the vot video labels.
@@ -123,6 +125,13 @@ public class TabDiaryFragment extends Fragment {
                 }
 
         );
+        closeVideoButton.setOnClickListener(new View.OnClickListener(){
+            @Override
+            public void onClick(View v) {
+                videoDialog.hide();
+            }
+
+        });
 
         votsLV.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             public void onItemClick(AdapterView parentView, View childView,
@@ -156,8 +165,9 @@ public class TabDiaryFragment extends Fragment {
                         public void onSuccess(FileDownloadTask.TaskSnapshot taskSnapshot) {
                             // Local vot file has been created.
                             uri = Uri.fromFile(localFile);
-                            ; //Declare your url here.
-
+                            videoDialog.show();
+                            videoView.setVideoURI(uri);
+                            videoView.start();
 
                         }
                     }).addOnFailureListener(new OnFailureListener() {
@@ -167,7 +177,6 @@ public class TabDiaryFragment extends Fragment {
                             Misc.toast("Failed to download video:" + item, getContext());
                             Log.e(TAG, "Failed to download video: " + exception);
 
-
                         }
                     });
 
@@ -175,23 +184,10 @@ public class TabDiaryFragment extends Fragment {
                     // Play the video in the VideoView.
                     Uri uri = Uri.parse(localFile.getAbsolutePath()); //Declare your url here.
 
-                    mVideoView.setVideoURI(uri);
-                    mVideoView.requestFocus();
-
-                    mVideoView.start();
-
-
-
                     videoDialog.show();
-
-                    Log.v("Vidoe-URI", uri+ "");
-
                     videoView.setVideoURI(uri);
                     videoView.start();
                 }
-
-
-                //vidView.show();
 
             }
 

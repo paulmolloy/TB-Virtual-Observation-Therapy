@@ -8,10 +8,13 @@
         android:layout_height="match_parent"
         android:orientation="vertical">
 
-        <VideoView
-        android:id="@+id/last_video"
-        android:layout_width="434dp"
-        android:layout_height="254dp" />
+
+        <TextView
+            android:id="@+id/textView2"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Virtual Observed Treatment Videos"
+            android:textAppearance="@style/TextAppearance.AppCompat.Caption" />
 
         <ListView
             android:layout_width="match_parent"
