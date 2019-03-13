@@ -6,6 +6,10 @@
 <html>
 
 <head>
+    <script
+    src="http://code.jquery.com/jquery-3.3.1.min.js"
+    integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8="
+    crossorigin="anonymous"></script>
     <title>Nurse sign up form</title>
     <style>
       @font-face {
@@ -68,8 +72,9 @@
           <label for="password">Password:</label></font> <input type="password" id="password" name="nurse_password">
         </div>
         <div class="button">
-          <input type="button" name="signup" value="Sign Up" onclick= getValues() >
+          <input type="button" name="signup" value="Sign Up" onclick= "getValues()" >
         </div>
+        <p id="message" ></p>
     </form>
 </body>
 
@@ -81,17 +86,15 @@
 
   function redirect(){
       setMessage("Redirecting... ")
-      const url = (new URLSearchParams(window.location.search)).get(http://127.0.0.1:4000/login)
-      window.location.replace(url)
+      window.location.replace("/graph")
   }
-
 
   function getValues()
   {
     var nursename = document.getElementById('nursename').value;
     var email = document.getElementById('email').value;
     var password = document.getElementById('password').value;
-    window.location.href='http://34.73.42.71:8080/api/insecure/add-nurse?name=' + nursename + '&email=' + email + '&password=' + password;
+    $.ajax('/api/insecure/add-nurse?name=' + nursename + '&email=' + email + '&password=' + password).then(()=>redirect())
   }
 </script>
 
