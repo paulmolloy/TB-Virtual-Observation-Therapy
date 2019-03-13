@@ -41,7 +41,6 @@ def login():
 def videos(userID):
     return send_file("videos/videos.html")
 
-
 @app.route('/nurseLogin')
 def nurseLogin():
     return send_file("nurseLogin.html")
@@ -50,9 +49,9 @@ def nurseLogin():
 def nurseSignUp():
     return send_file("nurseSignUp.html")
 
-@app.route('/patientManagement')
-def patientManagement():
-    return send_file("patientManagement.html")
+@app.route('/patientSignUp')
+def patientSignUp():
+    return send_file("patientSignUp.html")
 
 @app.route('/graph')
 def graph():
@@ -70,4 +69,4 @@ def send_file(path):
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=8080)
-    # app.run(host='127.0.0.1', port=4000, debug=True)
+    #app.run(host='127.0.0.1', port=4000, debug=True)

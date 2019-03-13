@@ -80,8 +80,7 @@ function setMessage(message){
 
 function redirect(){
     setMessage("Redirecting... ")
-    const url = (new URLSearchParams(window.location.search)).get("redirect")
-    window.location.replace(url)
+    window.location.replace("/graph")
 }
 
 function signIn(){

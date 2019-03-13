@@ -6,6 +6,10 @@
 <html>
 
 <head>
+  <script
+  src="http://code.jquery.com/jquery-3.3.1.min.js"
+  integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8="
+  crossorigin="anonymous"></script>
     <title>Patient sign up form</title>
     <style>
       @font-face {
@@ -53,19 +57,30 @@
           <label for="nurseid">Nurse ID:</label></font> <input type="text" id="nurseid" name="patient_mail">
         </div>
         <div class="button">
-          <input type="button" name="signup" value="Sign Up" onclick= getValues() >
+          <input type="button" name="signup" value="Sign Up" onclick= "getValues()" >
         </div>
+        <p id="message" ></p>
     </form>
 </body>
 
 <script type="text/javascript">
+
+  function setMessage(message){
+      document.getElementById("message").textContent = message
+  }
+
+  function redirect(){
+      setMessage("Redirecting... ")
+      window.location.replace("/graph")
+  }
+
   function getValues()
   {
     var patientname = document.getElementById('patientname').value;
     var email = document.getElementById('email').value;
     var password = document.getElementById('password').value;
     var nurseid = document.getElementById('nurseid').value;
-    window.location.href='http://34.73.42.71:8080/api/insecure/add-patient?name=' + patientname + '&email=' + email + '&password=' + password + '&nurseID=' + nurseid;
+    $.ajax('/api/insecure/add-patient?name=' + patientname + '&email=' + email + '&password=' + password + '&nurseID=' + nurseid).then(()=>redirect())
   }
 </script>
 
