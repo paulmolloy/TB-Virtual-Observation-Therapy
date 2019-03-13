@@ -7,7 +7,9 @@ import java.util.Map;
 /** Patient data downloaded from Firestore */
 public class FSPatient {
 
-    public String name, email, nurseID;
+    public String name, email, nurseID,timeToTake;
+    public long streak;
+    public boolean takenToday;
     public FSVotVideoRef[] votVideoRefs;
 
     public static void download(String patientID, PatientDownloadSuccess onSuccess, PatientDownloadFail onFail){
@@ -18,6 +20,9 @@ public class FSPatient {
                 p.name = d.getString("name");
                 p.email = d.getString("email");
                 p.nurseID = d.getString("nurseID");
+                p.timeToTake = d.getString("timeToTake");
+                p.takenToday = d.getBoolean("takenToday");
+                p.streak = d.getLong("streak");
                 // TODO(paulmolloy): Figure out if you really want to download
                 // all references here.
                 p.votVideoRefs = null;
