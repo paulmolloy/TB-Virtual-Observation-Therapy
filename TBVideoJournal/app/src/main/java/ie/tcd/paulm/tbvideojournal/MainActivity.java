@@ -1,6 +1,7 @@
 package ie.tcd.paulm.tbvideojournal;
 
 import android.Manifest;
+import android.content.Context;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.support.v4.app.ActivityCompat;
@@ -8,6 +9,8 @@ import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
+import android.view.Menu;
+import android.view.MenuItem;
 
 import ie.tcd.paulm.tbvideojournal.auth.Auth;
 import ie.tcd.paulm.tbvideojournal.auth.SignInFragment;
@@ -16,9 +19,12 @@ import ie.tcd.paulm.tbvideojournal.opencv.VotCamera;
 
 public class MainActivity extends AppCompatActivity {
 
+    public static Context context;
     private static final String TAG = "TB Video Journal";
 
-    public MainActivity() { }
+
+    public MainActivity() {
+    }
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -26,8 +32,8 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-
-
+        // Hack so we can Make a toast with this context in the firebase VotCamera.OnComplete()
+        MainActivity.context = this.getApplicationContext();
 
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA)
                 == PackageManager.PERMISSION_DENIED) {
@@ -56,8 +62,29 @@ public class MainActivity extends AppCompatActivity {
         FragmentManager fm = getSupportFragmentManager();
 
         if (fm.getBackStackEntryCount() == 1) finish();
+        else if(fm.getBackStackEntryCount()==2){
+            fm.popBackStack();
+            showMainMenuScreen(true);
+        }
         else fm.popBackStack();
 
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.menu, menu);
+        return super.onCreateOptionsMenu(menu);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        int id = item.getItemId();
+        if (id == R.id.logout) {
+            Auth.signOut();
+            showSignInScreen();
+        }
+
+        return super.onOptionsItemSelected(item);
     }
 
 
