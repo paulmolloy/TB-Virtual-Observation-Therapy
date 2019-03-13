@@ -128,7 +128,10 @@ public class TabDiaryFragment extends Fragment {
         closeVideoButton.setOnClickListener(new View.OnClickListener(){
             @Override
             public void onClick(View v) {
-                videoDialog.hide();
+                switch(v.getId()){
+                    case R.id.dialog_close_b:
+                        videoDialog.dismiss();
+                }
             }
 
         });
@@ -139,7 +142,6 @@ public class TabDiaryFragment extends Fragment {
             {
                 // Select video
                 String item = (String) votsLV.getItemAtPosition(position);
-                Misc.toast("You selected: " + item, getContext());
                 Log.d(TAG, "You selected: " + item);
 
                 // Play a vot video by clicking on it in the list.
@@ -158,7 +160,7 @@ public class TabDiaryFragment extends Fragment {
                 // TODO(paulmolloy): Download video if local video is older than the firebase video.
                 if(!localFile.exists()) {
                     // TODO(paulmolloy): do progress indicator.
-                    Misc.toast("Vot " + item + " is not stored locally downloading...", getContext());
+                    Misc.toast("Vot " + item + " is not stored locally downloading...", getContext(), true);
 
                     vidRef.getFile(localFile).addOnSuccessListener(new OnSuccessListener<FileDownloadTask.TaskSnapshot>() {
                         @Override
@@ -183,7 +185,6 @@ public class TabDiaryFragment extends Fragment {
                 }else{
                     // Play the video in the VideoView.
                     Uri uri = Uri.parse(localFile.getAbsolutePath()); //Declare your url here.
-
                     videoDialog.show();
                     videoView.setVideoURI(uri);
                     videoView.start();
