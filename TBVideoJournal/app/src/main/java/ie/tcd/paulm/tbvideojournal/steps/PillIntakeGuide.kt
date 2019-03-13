@@ -67,7 +67,7 @@ class PillIntakeGuide(private val root: MainActivity, private val cameraScreen: 
             if(!haveAllPillsBeenTaken) nextStep()
         }
 
-        closeButton.setOnClickListener { root.onBackPressed() }
+        closeButton.setOnClickListener { root.showMainMenuScreen(true) }
 
     }
 
