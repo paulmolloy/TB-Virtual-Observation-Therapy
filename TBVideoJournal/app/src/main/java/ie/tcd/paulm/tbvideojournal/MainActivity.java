@@ -62,6 +62,10 @@ public class MainActivity extends AppCompatActivity {
         FragmentManager fm = getSupportFragmentManager();
 
         if (fm.getBackStackEntryCount() == 1) finish();
+        else if(fm.getBackStackEntryCount()==2){
+            fm.popBackStack();
+            showMainMenuScreen(true);
+        }
         else fm.popBackStack();
 
     }
