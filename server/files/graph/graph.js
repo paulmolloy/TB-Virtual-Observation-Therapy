@@ -5,6 +5,7 @@ var timestampConfidenceList = []
 var idList = []
 var patientsConfidence = {}
 var result = []
+var videoList = []
 
 /** Returns the confidence for the number of pills taken */
 function findConfidence(timestampsAndConfidences) {
@@ -27,6 +28,7 @@ function findConfidence(timestampsAndConfidences) {
 
     return confidence
 }
+
 
 /** Generates the grid/table in HTML for patient data */
 function createColouredGrid() {
@@ -62,20 +64,28 @@ function createColouredGrid() {
         td.appendChild(a)
         tr.appendChild(td)
         for (var j = 0; j < 30; j++) {
-            if (patientsConfidence[usernamesList[i]][j] != undefined) {
-                if (patientsConfidence[usernamesList[i]][j] >= 55 && patientsConfidence[usernamesList[i]][j] <= 100) {
+            if (patientsConfidence[usernamesList[i]]['confidence'][j] != undefined) {
+                if (patientsConfidence[usernamesList[i]]['confidence'][j] >= 55 && patientsConfidence[usernamesList[i]]['confidence'][j] <= 100) {
                     var patientColour = document.createElement('td')
+                    patientColour.id = i
                     patientColour.setAttribute('bgcolor', '#77c548')
+                    patientColour.innerHTML= patientsConfidence[usernamesList[i]]['timestamp'][j]
+                    var vid = patientsConfidence[usernamesList[i]]['videos'][j]
                     tr.appendChild(patientColour)
-                }
-                else if (patientsConfidence[usernamesList[i]][j] >= 50 && patientsConfidence[usernamesList[i]][j] < 55) {
+    
+              }
+                else if (patientsConfidence[usernamesList[i]]['confidence'][j] >= 50 && patientsConfidence[usernamesList[i]]['confidence'][j] < 55) {
                     var patientColour = document.createElement('td')
+                    patientColour.id = i
                     patientColour.setAttribute('bgcolor', '#ffa500')
+                    patientColour.innerHTML= patientsConfidence[usernamesList[i]]['timestamp'][j]
                     tr.appendChild(patientColour)
                 }
                 else {
                     var patientColour = document.createElement('td')
+                    patientColour.id = i
                     patientColour.setAttribute('bgcolor', '#ff0000')
+                    patientColour.innerHTML= patientsConfidence[usernamesList[i]]['timestamp'][j]
                     tr.appendChild(patientColour)
                 }
             }
@@ -90,6 +100,7 @@ function createColouredGrid() {
     thead.appendChild(tbdy)
     tbl.appendChild(thead)
     body.appendChild(tbl)
+    
 }
 
 /**  Creates a legend for the graph **/
@@ -139,14 +150,19 @@ function getPatientData() {
                 q.forEach(d => {
                     result = d.data()
                     const pc = findConfidence(result.timestampsAndConfidences)
+                    var vid = result.videoPath
+                    videoList.push(vid)
                     timestampConfidenceList.push(pc)
-                    var utcSeconds = result.timestamp;
-                    var time = new Date(0);
-                    time.setUTCSeconds(utcSeconds);
-                    dateList.push(time)
+                    var utcSeconds = result.timestamp['seconds']
+                    var date = new Date(0);
+                    date.setUTCSeconds(utcSeconds);
+                    var formattedTime = (date.getMonth() + 1) + "/" + date.getDate()
+                    dateList.push(formattedTime)
                 })
-                patientsConfidence[doc.data().name] = timestampConfidenceList
+                patientsConfidence[doc.data().name] = {confidence : timestampConfidenceList, timestamp : dateList, videos: videoList}
                 timestampConfidenceList = []
+                dateList = []
+                videoList = []
                 return timestampConfidenceList
             })
             result = confidence
@@ -155,6 +171,17 @@ function getPatientData() {
         result.then(function (value) {
             createColouredGrid()
             createLegend()
+            document.querySelectorAll('td')
+            .forEach(e => e.addEventListener("click", function() {
+                if (patientsConfidence[usernamesList[e.id]] != undefined){
+                    for (var i = 0; i < Object.keys(patientsConfidence[usernamesList[e.id]]['timestamp']).length; i++) {
+                        if (patientsConfidence[usernamesList[e.id]]['timestamp'][i] == e.innerHTML)
+                        {
+                            console.log(patientsConfidence[usernamesList[e.id]]['videos'][i])
+                        }
+                    }
+                }
+            }));
         })
     });
 }
