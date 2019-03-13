@@ -23,6 +23,7 @@ import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
@@ -410,9 +411,9 @@ public class VotCamera extends Fragment implements CameraBridgeViewBase.CvCamera
                         // taskSnapshot.getMetadata() contains file metadata such as size, content-type, etc.
                         guide.setUploadProgress(100);
                         Log.d(TAG, "Uploaded your vot successfully" );
-                        Misc.toast("Uploaded your vot successfully", getContext());
+
+                        Misc.toast("Uploaded your vot successfully", MainActivity.context);
                         Log.d(TAG, "Upload finished location: " + videoRef.getPath());
-                        // TODO(paulmolloy): Save reference to it in Firestore
                         Log.d(TAG, "isOverwrite: " + isOverwrite);
 
                         // if(!isOverwrite) FSVotVideoRef.addVideoReference(videoRef.getPath(), "TB Vot on " + genCurDateString(), timestamps);

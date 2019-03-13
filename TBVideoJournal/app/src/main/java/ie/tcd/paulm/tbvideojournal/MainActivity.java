@@ -1,6 +1,7 @@
 package ie.tcd.paulm.tbvideojournal;
 
 import android.Manifest;
+import android.content.Context;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.support.v4.app.ActivityCompat;
@@ -16,9 +17,12 @@ import ie.tcd.paulm.tbvideojournal.opencv.VotCamera;
 
 public class MainActivity extends AppCompatActivity {
 
+    public static Context context;
     private static final String TAG = "TB Video Journal";
 
-    public MainActivity() { }
+
+    public MainActivity() {
+    }
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -26,8 +30,8 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-
-
+        // Hack so we can Make a toast with this context in the firebase VotCamera.OnComplete()
+        MainActivity.context = this.getApplicationContext();
 
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA)
                 == PackageManager.PERMISSION_DENIED) {
