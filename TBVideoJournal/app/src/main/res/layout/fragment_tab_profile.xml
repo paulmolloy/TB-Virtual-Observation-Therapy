@@ -43,16 +43,6 @@
         android:layout_marginLeft="12dp"
         android:adjustViewBounds="true"
          />
-
-    <Button
-        android:id="@+id/MainMenu_signOut"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_centerHorizontal="true"
-        android:layout_marginBottom="8dp"
-        android:layout_alignParentBottom="true"
-        android:text="Sign out"
-
-        />
+    
 
 </RelativeLayout >

@@ -8,6 +8,8 @@ import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
+import android.view.Menu;
+import android.view.MenuItem;
 
 import ie.tcd.paulm.tbvideojournal.auth.Auth;
 import ie.tcd.paulm.tbvideojournal.auth.SignInFragment;
@@ -58,6 +60,23 @@ public class MainActivity extends AppCompatActivity {
         if (fm.getBackStackEntryCount() == 1) finish();
         else fm.popBackStack();
 
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.menu, menu);
+        return super.onCreateOptionsMenu(menu);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        int id = item.getItemId();
+        if (id == R.id.logout) {
+            Auth.signOut();
+            showSignInScreen();
+        }
+
+        return super.onOptionsItemSelected(item);
     }
 
 

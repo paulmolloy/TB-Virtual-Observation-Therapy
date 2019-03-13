@@ -25,12 +25,6 @@ public class TabProfileFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_tab_profile, container, false);
 
-        Button signOutButton = view.findViewById(R.id.MainMenu_signOut);
-        signOutButton.setOnClickListener(b -> {
-            Auth.signOut();
-            getRoot().showSignInScreen();
-        });
-
         patientName = view.findViewById(R.id.MainMenu_name);
         nurseName = view.findViewById(R.id.MainMenu_nurse);
 
