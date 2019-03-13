@@ -18,6 +18,7 @@ public class Confidence {
     }
 
     public float getConfidence() {
+        if(faceConfidences.size()==0) return 0; // Avoid possible div 0.
         float sum = 0;
         for(Integer confidence : faceConfidences) {
             sum += confidence.intValue();

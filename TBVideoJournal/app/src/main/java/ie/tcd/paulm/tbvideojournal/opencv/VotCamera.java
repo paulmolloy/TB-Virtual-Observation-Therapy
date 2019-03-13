@@ -110,7 +110,6 @@ public class VotCamera extends Fragment implements CameraBridgeViewBase.CvCamera
     };
 
 
-
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 
