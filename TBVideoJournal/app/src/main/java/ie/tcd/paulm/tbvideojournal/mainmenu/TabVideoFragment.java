@@ -7,10 +7,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.TextView;
-
-import java.text.SimpleDateFormat;
-import java.util.Calendar;
-
 import ie.tcd.paulm.tbvideojournal.MainActivity;
 import ie.tcd.paulm.tbvideojournal.R;
 import ie.tcd.paulm.tbvideojournal.auth.Auth;
@@ -31,16 +27,19 @@ public class TabVideoFragment extends Fragment {
         Button faceButton = view.findViewById(R.id.MainMenu_vot);
         faceButton.setOnClickListener(b -> getRoot().showFaceScreen());
 
+        //FragmentManager fm = getActivity().getSupportFragmentManager();
+        //int tmp = fm.getBackStackEntryCount();
+       // Misc.toast("Video" + Integer.toString(tmp), getActivity());
         return view;
     }
-
+    /*
     @Override
     public void setUserVisibleHint(boolean isVisibleToUser) {
         super.setUserVisibleHint(isVisibleToUser);
         if (isVisibleToUser) {
             getFragmentManager().beginTransaction().detach(this).attach(this).commit();
         }
-    }
+    }*/
 
     private void loadFirestoreStuff(){
 
