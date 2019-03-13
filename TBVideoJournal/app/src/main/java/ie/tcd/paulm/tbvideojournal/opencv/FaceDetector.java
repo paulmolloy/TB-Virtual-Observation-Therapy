@@ -74,6 +74,11 @@ public class FaceDetector {
         return colorImage;
     }
 
+    public int getConfidence() {
+        if (faces.elemSize() > 0 ) return 1;
+        return 0;
+    }
+
 
 }
 
