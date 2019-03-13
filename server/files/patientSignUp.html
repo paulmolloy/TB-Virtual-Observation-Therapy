@@ -1,0 +1,72 @@
+<!--<color name="colorPrimary">#008577</color>
+    <color name="colorPrimaryDark">#00574B</color>
+    <color name="colorAccent">#D81B60</color>      -->
+
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Patient sign up form</title>
+    <style>
+      @font-face {
+        font-family: roboto;
+        src: url(Roboto-Regular.ttf);
+      }
+      html {
+        min-height: 100%;
+      }
+      body{
+        background: -webkit-linear-gradient(#008577, #80fff2);
+        background: -o-linear-gradient(#008577, #80fff2);
+        background: -moz-linear-gradient(#008577, #80fff2);
+        background: linear-gradient(#008577, #80fff2);
+        background-color: #93B874;
+        font-family: roboto;
+      }
+      h1{
+        text-align:left;
+      }
+      label{
+        display: inline-block;
+        float: left;
+        clear: left;
+        width: 100px;
+        text-align: left;
+      }
+    </style>
+</head>
+</head>
+
+<body>
+  <h1><font size=5 color=#ffffff >TaBlet Tracker - Patient Sign up Form</font></h1>
+    <form action="/patientSignedUp" method="post">
+        <div><font size=3 color=#ffffff >
+          <label for="patientname">Patient name:</label></font> <input type="text" id="patientname" name="patient_name">
+        </div>
+        <div><font size=3 color=#ffffff >
+          <label for="email">E-mail:</label></font> <input type="email" id="email" name="patient_mail">
+        </div>
+        <div><font size=3 color=#ffffff >
+          <label for="password">Password:</label></font> <input type="password" id="password" name="patient_password">
+        </div>
+        <div><font size=3 color=#ffffff >
+          <label for="nurseid">Nurse ID:</label></font> <input type="text" id="nurseid" name="patient_mail">
+        </div>
+        <div class="button">
+          <input type="button" name="signup" value="Sign Up" onclick= getValues() >
+        </div>
+    </form>
+</body>
+
+<script type="text/javascript">
+  function getValues()
+  {
+    var patientname = document.getElementById('patientname').value;
+    var email = document.getElementById('email').value;
+    var password = document.getElementById('password').value;
+    var nurseid = document.getElementById('nurseid').value;
+    window.location.href='http://34.73.42.71:8080/api/insecure/add-patient?name=' + patientname + '&email=' + email + '&password=' + password + '&nurseID=' + nurseid;
+  }
+</script>
+
+</html>
