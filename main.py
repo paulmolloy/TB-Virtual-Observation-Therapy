@@ -25,7 +25,7 @@ def load_file(path):
     If you go to: http://34.73.42.71:8080/files/login.html
     it will return the file located at: server/files/login.html
 
-    If you go to: http://34.73.42.71:8080/files/videos/style.css 
+    If you go to: http://34.73.42.71:8080/files/videos/style.css
     it will return the file located at: server/files/videos/style.css
 
     """
@@ -42,11 +42,28 @@ def videos(userID):
     return send_file("videos/videos.html")
 
 
+@app.route('/nurseLogin')
+def nurseLogin():
+    return send_file("nurseLogin.html")
+
+@app.route('/nurseSignUp')
+def nurseSignUp():
+    return send_file("nurseSignUp.html")
+
+@app.route('/patientManagement')
+def patientManagement():
+    return send_file("patientManagement.html")
+
+@app.route('/Roboto-Regular.ttf')
+def RobotoRegular():
+    return send_file("Roboto-Regular.ttf")
+
+
+
 def send_file(path):
     return send_from_directory('server/files', path)
 
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=8080)
-    # app.run(host='127.0.0.1', port=4000, debug=True)
-
+    # app.run(host='0.0.0.0', port=8080)
+    app.run(host='127.0.0.1', port=4000, debug=True)
