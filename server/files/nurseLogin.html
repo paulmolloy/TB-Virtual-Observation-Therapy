@@ -80,7 +80,7 @@ function setMessage(message){
 
 function redirect(){
     setMessage("Redirecting... ")
-    const url = (new URLSearchParams(window.location.search)).get(http://127.0.0.1:4000/login)
+    const url = (new URLSearchParams(window.location.search)).get("redirect")
     window.location.replace(url)
 }
 

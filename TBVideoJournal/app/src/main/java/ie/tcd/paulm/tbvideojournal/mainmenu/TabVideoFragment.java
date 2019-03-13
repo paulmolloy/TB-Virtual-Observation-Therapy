@@ -13,29 +13,20 @@ import java.util.Calendar;
 
 import ie.tcd.paulm.tbvideojournal.MainActivity;
 import ie.tcd.paulm.tbvideojournal.R;
+import ie.tcd.paulm.tbvideojournal.auth.Auth;
+import ie.tcd.paulm.tbvideojournal.firestore.FSPatient;
 
 public class TabVideoFragment extends Fragment {
 
     TextView takenToday,timeToTake,streak;
-    private boolean tmpTaken;
-    private String tmpTime;
-    private int tmpStreak;
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_tab_video, container, false);
 
-        //Dummy values, will be actual values from firebase when data is in the DB
-        tmpTaken = false;
-        tmpTime = new SimpleDateFormat("HH:mm").format(Calendar.getInstance().getTime());
-        tmpStreak = 5;
-
-
         takenToday = view.findViewById(R.id.MainMenu_taken_today);
-        takenToday.setText("Taken today: "+ String.valueOf(tmpTaken));
         timeToTake = view.findViewById(R.id.MainMenu_time_to_take);
-        timeToTake.setText("Time to take prescription: "+ tmpTime);
         streak = view.findViewById(R.id.MainMenu_streak);
-        streak.setText("Current streak: "+ tmpStreak);
+        loadFirestoreStuff();
 
         Button faceButton = view.findViewById(R.id.MainMenu_vot);
         faceButton.setOnClickListener(b -> getRoot().showFaceScreen());
@@ -49,6 +40,20 @@ public class TabVideoFragment extends Fragment {
         if (isVisibleToUser) {
             getFragmentManager().beginTransaction().detach(this).attach(this).commit();
         }
+    }
+
+    private void loadFirestoreStuff(){
+
+        FSPatient.download(
+                Auth.getCurrentUserID(),
+                patientData -> {
+                    takenToday.setText("Taken today: "+ String.valueOf(patientData.takenToday));
+                    timeToTake.setText("Time to take prescription: "+ patientData.timeToTake);
+                    streak.setText("Current streak: "+ patientData.streak);
+                },
+                error -> takenToday.setText(error)
+        );
+
     }
 
     private MainActivity getRoot(){

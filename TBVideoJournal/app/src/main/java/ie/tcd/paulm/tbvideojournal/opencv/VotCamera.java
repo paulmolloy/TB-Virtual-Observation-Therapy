@@ -87,6 +87,7 @@ public class VotCamera extends Fragment implements CameraBridgeViewBase.CvCamera
     private boolean recording = false;
     private int VIDEO_BITRATE = 512 * 1000;// 40000;
     private PillIntakeGuide guide;
+    private Confidence confidence;
 
 
 
@@ -109,7 +110,6 @@ public class VotCamera extends Fragment implements CameraBridgeViewBase.CvCamera
     };
 
 
-
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 
@@ -130,7 +130,7 @@ public class VotCamera extends Fragment implements CameraBridgeViewBase.CvCamera
         File root = Environment.getExternalStorageDirectory();
 
         // TODO(paulmolloy) write to apps internal dir for more privacy.
-        // Setup external /downloads dir for writing to.
+        // Setup external /downloads dir for writing to.Confidence
         if (!isExternalStorageWritable()) {
             Log.e(TAG, "Failed to get External Storage");
         }
@@ -147,8 +147,9 @@ public class VotCamera extends Fragment implements CameraBridgeViewBase.CvCamera
             return Unit.INSTANCE;
         });
         guide.onStepCompleted((pill, step) -> {
-            float randomConfidence = (float)(0.1f + (Math.random() * 0.9f));
-            return randomConfidence;
+            float stepConfidence = confidence.getConfidence();
+            confidence.reset();
+            return stepConfidence;
             // ↑ This will eventually need to return the real confidence value that was just calculated for the current step
         });
         guide.onAllPillsTaken(timestampsAndConfidences -> {
@@ -169,7 +170,7 @@ public class VotCamera extends Fragment implements CameraBridgeViewBase.CvCamera
         mMediaRecorder = new MediaRecorder();
 
         mProjectionManager = (MediaProjectionManager) getContext().getSystemService(Context.MEDIA_PROJECTION_SERVICE);
-
+        confidence = new Confidence();
         return view;
     }
 
@@ -185,9 +186,16 @@ public class VotCamera extends Fragment implements CameraBridgeViewBase.CvCamera
 
     @Override
     public void onCameraViewStopped() {
-            // colorImage.release();
-            // rotatedColorImage.release();
-            releaseMediaRecorder();
+        // colorImage.release();
+        // rotatedColorImage.release();
+        releaseMediaRecorder();
+        File localFile = new File(Environment.getExternalStorageDirectory().getAbsolutePath() + VOT_DIR + VOT_SCREEN_RECORD_VIDEO_FILENAME + ".mp4");
+        // Delete the file if the user quits the app before it starts recording but after prepare.
+        if(localFile.exists() && localFile.length()==0) {
+            localFile.delete();
+            Log.d(TAG, "Deleted empty file on early quit.");
+        }
+
     }
 
     @Override
@@ -205,6 +213,7 @@ public class VotCamera extends Fragment implements CameraBridgeViewBase.CvCamera
 
         // Use the classifier to detect faces
         colorImage = faceDetector.process(colorImage, grayscaleImageRot);
+        confidence.addFaceConfidence(faceDetector.getConfidence());
 
         // Keep track of what the FPS is.
         getActivity().runOnUiThread(new Runnable() {
@@ -303,7 +312,6 @@ public class VotCamera extends Fragment implements CameraBridgeViewBase.CvCamera
 
         int width = mDisplayMetrics.widthPixels;
         int height = mDisplayMetrics.heightPixels;
-
         mMediaRecorder.setAudioSource(MediaRecorder.AudioSource.MIC);
         mMediaRecorder.setVideoSource(MediaRecorder.VideoSource.SURFACE);
         mMediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4);

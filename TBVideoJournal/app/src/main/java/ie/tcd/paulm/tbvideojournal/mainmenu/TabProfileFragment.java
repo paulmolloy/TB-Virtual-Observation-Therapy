@@ -6,7 +6,11 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.TextView;
+
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.request.RequestOptions;
 
 import ie.tcd.paulm.tbvideojournal.MainActivity;
 import ie.tcd.paulm.tbvideojournal.R;
@@ -31,6 +35,15 @@ public class TabProfileFragment extends Fragment {
         nurseName = view.findViewById(R.id.MainMenu_nurse);
 
         loadFirestoreStuff();
+
+        ImageView imageView = (ImageView) view.findViewById(R.id.profile_pic);
+
+        Glide.with(this).load("https://firebasestorage.googleapis.com/v0/b/tb-vot.appspot.com/o/patient-photos%2F" +
+                Auth.getCurrentUserID() +
+                ".jpg?alt=media&token=9b52b435-92ba-445d-aad6-43e4b84f1da1")
+                .apply(RequestOptions.circleCropTransform())
+                .override(200,200)
+                .into(imageView);
 
         return view;
     }
