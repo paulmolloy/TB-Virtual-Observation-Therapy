@@ -1,5 +1,7 @@
 package ie.tcd.paulm.tbvideojournal.mainmenu;
 
+import android.app.Dialog;
+import android.graphics.PixelFormat;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
@@ -9,6 +11,8 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.Window;
+import android.view.WindowManager;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
@@ -27,6 +31,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import ie.tcd.paulm.tbvideojournal.MainActivity;
 import ie.tcd.paulm.tbvideojournal.R;
 import ie.tcd.paulm.tbvideojournal.auth.Auth;
 
@@ -46,6 +51,8 @@ public class TabDiaryFragment extends Fragment {
     private FirebaseStorage storage;
     private Uri uri;
     private View v;
+    private Dialog videoDialog;
+    private VideoView videoView;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -53,6 +60,18 @@ public class TabDiaryFragment extends Fragment {
         if(getUserVisibleHint()){ // fragment is visible
             loadData();
         }
+        videoDialog = new Dialog(getActivity());
+        videoDialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
+        videoDialog.setContentView(R.layout.view_video_dialog);//add your own xml with defied with and height of videoview
+        videoView = (VideoView) videoDialog.findViewById(R.id.last_video_test);
+        WindowManager.LayoutParams lp = new WindowManager.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        lp.copyFrom(videoDialog.getWindow().getAttributes());
+        videoDialog.getWindow().setAttributes(lp);
+
+        videoDialog.getWindow().setFormat(PixelFormat.TRANSLUCENT);
+
+
         return v;
     }
 
@@ -138,9 +157,6 @@ public class TabDiaryFragment extends Fragment {
                             // Local vot file has been created.
                             uri = Uri.fromFile(localFile);
                             ; //Declare your url here.
-                            mVideoView.setVideoURI(uri);
-                            mVideoView.requestFocus();
-                            mVideoView.start();
 
 
                         }
@@ -158,11 +174,24 @@ public class TabDiaryFragment extends Fragment {
                 }else{
                     // Play the video in the VideoView.
                     Uri uri = Uri.parse(localFile.getAbsolutePath()); //Declare your url here.
+
                     mVideoView.setVideoURI(uri);
                     mVideoView.requestFocus();
 
                     mVideoView.start();
+
+
+
+                    videoDialog.show();
+
+                    Log.v("Vidoe-URI", uri+ "");
+
+                    videoView.setVideoURI(uri);
+                    videoView.start();
                 }
+
+
+                //vidView.show();
 
             }
 
