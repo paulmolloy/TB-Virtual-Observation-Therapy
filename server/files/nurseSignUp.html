@@ -2,100 +2,136 @@
     <color name="colorPrimaryDark">#00574B</color>
     <color name="colorAccent">#80fff2</color>      -->
 
-<!DOCTYPE html>
-<html>
-
-<head>
-    <script
-    src="http://code.jquery.com/jquery-3.3.1.min.js"
-    integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8="
-    crossorigin="anonymous"></script>
-    <title>Nurse sign up form</title>
-    <style>
-      @font-face {
-        font-family: roboto;
-        src: url(Roboto-Regular.ttf);
+    <!DOCTYPE html>
+    <html>
+    
+    <head>
+        <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+        
+        <script
+        src="http://code.jquery.com/jquery-3.3.1.min.js"
+        integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8="
+        crossorigin="anonymous"></script>
+        <title>Nurse sign up form</title>
+        <style>
+          @font-face {
+            font-family: roboto;
+            src: url(Roboto-Regular.ttf);
+          }
+          html {
+            min-height: 100%;
+          }
+          #signup{
+            margin-top: 40px;
+            width:350px;
+            background-color: #F0EEEE;
+            padding: 30px;
+            border-radius: 15px;
+            height:300px;
+            text-align: left;
+            margin-left: auto;
+            margin-right: auto;
+          }
+          #button{
+            float: right;
+          }
+          body{
+            background: -webkit-linear-gradient(#008577, #80fff2);
+            background: -o-linear-gradient(#008577, #80fff2);
+            background: -moz-linear-gradient(#008577, #80fff2);
+            background: linear-gradient(#008577, #80fff2);
+            background-color: #93B874;
+            font-family: roboto;
+            margin: 0 auto;
+          }
+          #nursename
+          {
+            width:100%;
+          }
+          #password
+          {
+            width:100%;
+          }
+          #email
+          {
+            width:100%;
+          }
+          h1{
+            text-align:center;
+            margin-top:40px;
+          }
+          label{
+            display: inline-block;
+            float: left;
+            clear: left;
+            width: 100px;
+            text-align: left;
+          }
+        </style>
+        <script src="https://www.gstatic.com/firebasejs/5.8.6/firebase.js"></script>
+        <script src="https://www.gstatic.com/firebasejs/5.8.5/firebase-app.js"></script>
+        <script src="https://www.gstatic.com/firebasejs/5.8.6/firebase-auth.js"></script>
+        <script src="https://www.gstatic.com/firebasejs/5.8.6/firebase-database.js"></script>
+        <script src="https://www.gstatic.com/firebasejs/5.8.6/firebase-firestore.js"></script>
+        <script src="https://www.gstatic.com/firebasejs/5.8.6/firebase-messaging.js"></script>
+        <script src="https://www.gstatic.com/firebasejs/5.8.6/firebase-functions.js"></script>
+        <script>
+        // Initialize Firebase
+        var config = {
+          apiKey: "AIzaSyAgQbVptjsQH0p-4YgJtaCWIQtXaS_SyhE",
+          authDomain: "tb-vot.firebaseapp.com",
+          databaseURL: "https://tb-vot.firebaseio.com",
+          projectId: "tb-vot",
+          storageBucket: "tb-vot.appspot.com",
+          messagingSenderId: "80680232908"
+        };
+        firebase.initializeApp(config);
+        </script>
+    </head>
+    
+    <body>
+      <h1><font size=5 color=#ffffff >Patient Sign Up Form</font></h1>
+      <div id="signup">
+        <form action="/nurseSignedUp" method="post">
+          <div class="form-group" >
+              <label for="nursename">Nurse name:</label></font> 
+              <input type="text" id="nursename" name="nurse_name">
+            </div>
+            <div class="form-group" 
+              <label for="email">E-mail:</label></font> 
+              <input type="email" id="email" name="nurse_mail">
+            </div>
+            <div class="form-group" 
+              <label for="password">Password:</label></font> 
+              <input type="password" id="password" name="nurse_password">
+            </div>
+            <div class="button">
+              <input type="button" id="button" class="btn btn-primary" name="signup" value="Sign Up" onclick= "getValues()" >
+            </div>
+            <p id="message" ></p>
+        </form>
+      </div>
+    </body>
+    
+    <script type="text/javascript">
+    
+      function setMessage(message){
+          document.getElementById("message").textContent = message
       }
-      html {
-        min-height: 100%;
+    
+      function redirect(){
+          setMessage("Redirecting... ")
+          window.location.replace("/graph")
       }
-      body{
-        background: -webkit-linear-gradient(#008577, #80fff2);
-        background: -o-linear-gradient(#008577, #80fff2);
-        background: -moz-linear-gradient(#008577, #80fff2);
-        background: linear-gradient(#008577, #80fff2);
-        background-color: #93B874;
-        font-family: roboto;
+    
+      function getValues()
+      {
+        var nursename = document.getElementById('nursename').value;
+        var email = document.getElementById('email').value;
+        var password = document.getElementById('password').value;
+        $.ajax('/api/insecure/add-nurse?name=' + nursename + '&email=' + email + '&password=' + password).then(()=>redirect())
       }
-      h1{
-        text-align:left;
-      }
-      label{
-        display: inline-block;
-        float: left;
-        clear: left;
-        width: 100px;
-        text-align: left;
-      }
-    </style>
-    <script src="https://www.gstatic.com/firebasejs/5.8.6/firebase.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/5.8.5/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/5.8.6/firebase-auth.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/5.8.6/firebase-database.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/5.8.6/firebase-firestore.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/5.8.6/firebase-messaging.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/5.8.6/firebase-functions.js"></script>
-    <script>
-    // Initialize Firebase
-    var config = {
-      apiKey: "AIzaSyAgQbVptjsQH0p-4YgJtaCWIQtXaS_SyhE",
-      authDomain: "tb-vot.firebaseapp.com",
-      databaseURL: "https://tb-vot.firebaseio.com",
-      projectId: "tb-vot",
-      storageBucket: "tb-vot.appspot.com",
-      messagingSenderId: "80680232908"
-    };
-    firebase.initializeApp(config);
     </script>
-</head>
-
-<body>
-  <h1><font size=5 color=#ffffff >TaBlet Tracker - Nurse Sign up Form</font></h1>
-    <form action="/nurseSignedUp" method="post">
-        <div><font size=3 color=#ffffff >
-          <label for="nursename">Nurse name:</label></font> <input type="text" id="nursename" name="nurse_name">
-        </div>
-        <div><font size=3 color=#ffffff >
-          <label for="email">E-mail:</label></font> <input type="email" id="email" name="nurse_mail">
-        </div>
-        <div><font size=3 color=#ffffff >
-          <label for="password">Password:</label></font> <input type="password" id="password" name="nurse_password">
-        </div>
-        <div class="button">
-          <input type="button" name="signup" value="Sign Up" onclick= "getValues()" >
-        </div>
-        <p id="message" ></p>
-    </form>
-</body>
-
-<script type="text/javascript">
-
-  function setMessage(message){
-      document.getElementById("message").textContent = message
-  }
-
-  function redirect(){
-      setMessage("Redirecting... ")
-      window.location.replace("/graph")
-  }
-
-  function getValues()
-  {
-    var nursename = document.getElementById('nursename').value;
-    var email = document.getElementById('email').value;
-    var password = document.getElementById('password').value;
-    $.ajax('/api/insecure/add-nurse?name=' + nursename + '&email=' + email + '&password=' + password).then(()=>redirect())
-  }
-</script>
-
-</html>
+    
+    </html>
+    
