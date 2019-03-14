@@ -1,0 +1,56 @@
+#signUp{
+    width:200px;
+    position:absolute;
+    top:0;
+    right:0;
+    margin-right: 260px;
+    margin-top: 10px;
+}
+#logOut{
+    width:200px;
+    position:absolute;
+    top:0;
+    right:0;
+    margin-right: 50px;
+    margin-top: 10px;
+}
+video{
+    width:400px;
+    height:500px;
+}
+
+
+.modal {
+    display: block; /* Hidden by default */
+    position: fixed; /* Stay in place */
+    left: 0;
+    top: 0;
+    padding-top: 100px;
+    margin: 0 auto;
+    background-color: rgb(0,0,0); /* Fallback color */
+    background-color: rgba(0,0,0,0.7); /* Black w/ opacity */
+  }
+  
+  /* Modal Content */
+  .modal-content {
+    background-color: #fefefe;
+    margin: auto;
+    padding: 20px;
+    border: 1px solid #888;
+    width: 02
+  }
+  
+  /* The Close Button */
+  .close {
+    color: #aaaaaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+  }
+  
+  .close:hover,
+  .close:focus {
+    color: #000;
+    text-decoration: none;
+    cursor: pointer;
+  } 
