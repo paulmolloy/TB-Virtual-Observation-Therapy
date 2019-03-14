@@ -25,8 +25,8 @@
 
 </head>
 <body>
-<input type="button" id = "signUp" class="btn btn-warning" name="patientSignUp" value="Sign up new patient" onclick= "redirect()" >
-<input type="button" id = "logOut" class="btn btn-warning" name="patientSignUp" value="Log out" onclick= "redirect()" >
+<input type="button" id = "signUp" class="btn btn-warning" name="patientSignUp" value="Sign up new patient" onclick= "redirect_to_patient_signup()" >
+<input type="button" id = "logOut" class="btn btn-warning" name="logOut" value="Log out" onclick= "redirect_to_login()" >
 <h2 style="margin: 0 auto; margin-top: 100px;">Nurse Dashboard</h2>
 <div class="modal" id="myModal" role="dialog">
         <div class="modal-dialog">
@@ -60,8 +60,12 @@ var config = {
 };
 var app = firebase.initializeApp(config);
 
-function redirect(){
+function redirect_to_patient_signup(){
     window.location.replace("/patientSignUp")
+}
+
+function redirect_to_login(){
+    window.location.replace("/nurseLogin")
 }
 
 </script>
