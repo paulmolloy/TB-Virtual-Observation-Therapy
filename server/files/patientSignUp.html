@@ -6,6 +6,8 @@
 <html>
 
 <head>
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+        
   <script
   src="http://code.jquery.com/jquery-3.3.1.min.js"
   integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8="
@@ -19,6 +21,17 @@
       html {
         min-height: 100%;
       }
+      #signup{
+            margin-top: 40px;
+            width:350px;
+            background-color: #F0EEEE;
+            padding: 30px;
+            border-radius: 15px;
+            height:400px;
+            text-align: left;
+            margin-left: auto;
+            margin-right: auto;
+          }
       body{
         background: -webkit-linear-gradient(#008577, #80fff2);
         background: -o-linear-gradient(#008577, #80fff2);
@@ -26,9 +39,29 @@
         background: linear-gradient(#008577, #80fff2);
         background-color: #93B874;
         font-family: roboto;
+        margin: 0 auto;
+      }
+      #button{
+        float:right;
+      }
+      #patientname{
+        width:100%;
+      }
+      #nurseid
+      {
+        width:100%;
+      }
+      #password
+      {
+        width:100%;
+      }
+      #email
+      {
+        width:100%;
       }
       h1{
-        text-align:left;
+        text-align:center;
+        margin-top:40px;
       }
       label{
         display: inline-block;
@@ -42,25 +75,31 @@
 </head>
 
 <body>
-  <h1><font size=5 color=#ffffff >TaBlet Tracker - Patient Sign up Form</font></h1>
-    <form action="/patientSignedUp" method="post">
-        <div><font size=3 color=#ffffff >
-          <label for="patientname">Patient name:</label></font> <input type="text" id="patientname" name="patient_name">
+  <h1><font size=5 color=#ffffff >Patient Sign up Form</font></h1>
+  <div id="signup">
+  <form action="/patientSignedUp" method="post">
+    <div class="form-group" >
+          <label for="patientname">Patient name:</label></font> 
+          <input type="text" id="patientname" name="patient_name">
         </div>
-        <div><font size=3 color=#ffffff >
-          <label for="email">E-mail:</label></font> <input type="email" id="email" name="patient_mail">
+        <div class="form-group" >
+          <label for="email">E-mail:</label></font> 
+          <input type="email" id="email" name="patient_mail">
         </div>
-        <div><font size=3 color=#ffffff >
-          <label for="password">Password:</label></font> <input type="password" id="password" name="patient_password">
+        <div class="form-group" >
+          <label for="password">Password:</label></font> 
+          <input type="password" id="password" name="patient_password">
         </div>
-        <div><font size=3 color=#ffffff >
-          <label for="nurseid">Nurse ID:</label></font> <input type="text" id="nurseid" name="patient_mail">
+        <div class="form-group" >
+          <label for="nurseid">Nurse ID:</label></font> 
+          <input type="text" id="nurseid" name="patient_mail">
         </div>
         <div class="button">
-          <input type="button" name="signup" value="Sign Up" onclick= "getValues()" >
+          <input type="button" id="button" class="btn btn-primary" name="signup" value="Sign Up" onclick= "getValues()" >
         </div>
         <p id="message" ></p>
     </form>
+  </div> 
 </body>
 
 <script type="text/javascript">
