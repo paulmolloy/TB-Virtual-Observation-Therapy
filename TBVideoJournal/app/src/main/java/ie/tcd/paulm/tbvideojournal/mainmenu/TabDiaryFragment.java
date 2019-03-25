@@ -148,7 +148,6 @@ public class TabDiaryFragment extends Fragment {
                 storage = FirebaseStorage.getInstance();
                 StorageReference storageRef = storage.getReference();
                 StorageReference vidRef = storageRef.child(nameToFSPath.get(item));
-
                 File root = Environment.getExternalStorageDirectory();
                 File dir = new File (root.getAbsolutePath() + VOT_DIR );
                 dir.mkdirs();
