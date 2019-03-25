@@ -139,7 +139,14 @@ function createLegend() {
 
 /** Gets the patient name, ID and confidence for pills**/
 function getPatientData() {
-    firebase.firestore().collection("patients").orderBy("name", "asc").get().then(querySnapshot => {
+	firebase.auth().onAuthStateChanged(function(user) {
+	if (!user){
+		window.location.replace("/nurseLogin");
+	}
+//	var user = firebase.auth().currentUser;
+  	console.log(user.uid);
+//	firebase.firestore().doc("patients/Y7PjItKBXyeroWFb1YgzphlQ0FN2").get().then( doc => console.log(doc.data()));
+	firebase.firestore().collection("patients").where("nurseID","==",user.uid).orderBy("name", "asc").get().then(querySnapshot => {
         querySnapshot.forEach(doc => {
             usernamesList.push(doc.data().name)
             patientsConfidence[doc.data().name] = []
@@ -166,12 +173,18 @@ function getPatientData() {
             result = confidence
             return result
         });
-        result.then(function (value) {
+ 
+	if(result.then)
+		{
+	    console.log(result)
+	    result.then(function (value) {
             createColouredGrid()
             createLegend()
             displayVideo()
-        })
+	    })
+        }
     });
+});
 }
 
 /** Displays video if a table cell is clicked **/
