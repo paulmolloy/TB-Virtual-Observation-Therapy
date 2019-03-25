@@ -25,6 +25,7 @@ function redirectToLoginPageIfRequired() {
         else {
             watchPatientsDataForUpdates()
             watchPatientsVideosForUpdates()
+	    createGraph()
         }
     })
 }
@@ -115,7 +116,6 @@ function renderVideo(doc){
 
     const { label, manuallyReviewed, timestamp, timestampsAndConfidences, videoPath } = doc.data()
     const id = doc.id
-
     const videoURL = videoURLs[videoPath]
     // If the URL is not cached, download it
     if(!videoURL) firebase.storage().ref(videoPath).getDownloadURL().then(url => {
@@ -124,7 +124,8 @@ function renderVideo(doc){
     })
 
     const pc = findPillCountAndConfidence(timestampsAndConfidences)
-    
+    console.log(pc);
+
     const green =  "#00564C"
     const orange = "#F8828A"
     const confidenceText = `<span style="color: ${pc.confidence > 50 ? green : orange }" ><b>${pc.confidence}%</b></span>`
@@ -151,6 +152,96 @@ function renderVideo(doc){
         </div>
     `
     
+}
+
+
+function createGraph(){
+    var timestamp = []
+    var dict ={}
+    var hours = []
+    var lowestConfidence = []
+    firebase.firestore().collection("patients").doc(getUID()).collection("votVideoRefs").get().then( function (doc) {
+    	doc.forEach(qdoc => {
+	   var result = qdoc.data();
+	   console.log(result.timestamp.seconds);
+	   console.log(result.timestampsAndConfidences);
+	   var utcSeconds = result.timestamp.seconds;
+           var d = new Date(0);
+           d.setUTCSeconds(utcSeconds);
+           var year = d.getFullYear();
+	   var month = d.getMonth() + 1;
+           var day = d.getDate();
+	   var date = day + "-" + month + "-" + year;
+          // console.log(d.getTime()
+		//)
+	  var seconds = d.getSeconds();
+          var minutes = d.getMinutes();
+          var hour = d.getHours();
+	  if (seconds < 10)
+		{
+			seconds= "0" + seconds
+		}
+		if (minutes < 10)
+		{
+			minutes = "0" + minutes
+		}
+
+	  // var time = new Date(d * 1000).toISOString().substr(11, 8);
+	   var time = hour + ":" + minutes + ":" + seconds
+	   timestamp.push(date);
+	   lowestConfidence.push(result.timestampsAndConfidences);
+	   dict[d] = d.getTime();
+	   console.log(time);
+	   hours.push(time);
+	})
+    });
+    console.log(hours);
+    console.log(timestamp);
+    console.log(lowestConfidence);
+    console.log(dict);
+    firebase.firestore().collection("patients/" + getUID()+ "/votVideoRefs").orderBy("timestamp", "desc").get().then(doc => {
+    	console.log(doc.data)
+    });
+    var ctx = document.getElementById('myChart').getContext('2d');
+    var myChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+        labels: timestamp,
+        datasets: [{
+            label: 'Time of pill taken',
+            data: hours,
+                fill:                 true,
+        backgroundColor:      'rgba(31, 50, 173, 0.2)', // blue
+        borderColor:          'rgba(31, 50, 173, 0.6)',
+        pointBorderColor:     'rgba(31, 50, 173, 0.6)',
+        pointBackgroundColor: 'rgba(31, 50, 173, 0.6)'
+        }]
+    },
+    options: {
+	// responsive: true,
+        scales: {
+		yAxes: [{
+			ticks: {
+				userCallback: function(v) { return epoch_format(v) },
+				stepSize: 30 * 60
+			}
+		}]
+		   }
+    },
+
+      tooltips: {
+        callbacks: {
+          label: function(tooltipItem, data) {
+            return data.datasets[tooltipItem.datasetIndex].label + ': ' + epoch_to_hh_mm_ss(tooltipItem.yLabel)
+          }
+        }
+      }
+   
+});
+}
+
+function epoch_format(epoch){
+	return new Date(epoch*1000).toISOString().substr(12,7)
 }
 
 redirectToLoginPageIfRequired()
