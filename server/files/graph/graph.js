@@ -69,23 +69,22 @@ function createColouredGrid() {
                     var patientColour = document.createElement('td')
                     patientColour.id = i
                     patientColour.setAttribute('bgcolor', '#77c548')
-                    patientColour.innerHTML= patientsConfidence[usernamesList[i]]['timestamp'][j]
-                    var vid = patientsConfidence[usernamesList[i]]['videos'][j]
+                    patientColour.innerHTML = patientsConfidence[usernamesList[i]]['timestamp'][j]
                     tr.appendChild(patientColour)
-    
-              }
+
+                }
                 else if (patientsConfidence[usernamesList[i]]['confidence'][j] >= 50 && patientsConfidence[usernamesList[i]]['confidence'][j] < 55) {
                     var patientColour = document.createElement('td')
                     patientColour.id = i
                     patientColour.setAttribute('bgcolor', '#ffa500')
-                    patientColour.innerHTML= patientsConfidence[usernamesList[i]]['timestamp'][j]
+                    patientColour.innerHTML = patientsConfidence[usernamesList[i]]['timestamp'][j]
                     tr.appendChild(patientColour)
                 }
                 else {
                     var patientColour = document.createElement('td')
                     patientColour.id = i
                     patientColour.setAttribute('bgcolor', '#ff0000')
-                    patientColour.innerHTML= patientsConfidence[usernamesList[i]]['timestamp'][j]
+                    patientColour.innerHTML = patientsConfidence[usernamesList[i]]['timestamp'][j]
                     tr.appendChild(patientColour)
                 }
             }
@@ -100,11 +99,11 @@ function createColouredGrid() {
     thead.appendChild(tbdy)
     tbl.appendChild(thead)
     body.appendChild(tbl)
-    
+
 }
 
 /**  Creates a legend for the graph **/
-function createLegend(){
+function createLegend() {
     var body = document.body, tbl = document.createElement("table"), tbdy = document.createElement('tbody'), thead = document.createElement("thead")
     tbl.setAttribute('class', 'table table-bordered')
     tbl.style.width = "auto"
@@ -120,10 +119,9 @@ function createLegend(){
     tr.appendChild(th)
     th.appendChild(document.createTextNode('Confidence Interval (%)'))
     tbdy.appendChild(tr)
-    const colourList = ["#77c548","#ffa500","#ff0000"]
+    const colourList = ["#77c548", "#ffa500", "#ff0000"]
     const confidenceIntervalList = ["100 - 65", "65 - 35", "35 - 0"]
-    for(var i = 0; i < colourList.length; i++)
-    {
+    for (var i = 0; i < colourList.length; i++) {
         var tr = document.createElement('tr'), td = document.createElement('td'), td1 = document.createElement('td')
         td.style.backgroundColor = colourList[i]
         var confidence = document.createTextNode(confidenceIntervalList[i])
@@ -141,7 +139,7 @@ function createLegend(){
 
 /** Gets the patient name, ID and confidence for pills**/
 function getPatientData() {
-    firebase.firestore().collection("patients").get().then(querySnapshot => {
+    firebase.firestore().collection("patients").orderBy("name", "asc").get().then(querySnapshot => {
         querySnapshot.forEach(doc => {
             usernamesList.push(doc.data().name)
             patientsConfidence[doc.data().name] = []
@@ -159,7 +157,7 @@ function getPatientData() {
                     var formattedTime = (date.getMonth() + 1) + "/" + date.getDate()
                     dateList.push(formattedTime)
                 })
-                patientsConfidence[doc.data().name] = {confidence : timestampConfidenceList, timestamp : dateList, videos: videoList}
+                patientsConfidence[doc.data().name] = { confidence: timestampConfidenceList, timestamp: dateList, videos: videoList }
                 timestampConfidenceList = []
                 dateList = []
                 videoList = []
@@ -171,19 +169,48 @@ function getPatientData() {
         result.then(function (value) {
             createColouredGrid()
             createLegend()
-            document.querySelectorAll('td')
-            .forEach(e => e.addEventListener("click", function() {
-                if (patientsConfidence[usernamesList[e.id]] != undefined){
-                    for (var i = 0; i < Object.keys(patientsConfidence[usernamesList[e.id]]['timestamp']).length; i++) {
-                        if (patientsConfidence[usernamesList[e.id]]['timestamp'][i] == e.innerHTML)
+            displayVideo()
+        })
+    });
+}
+
+/** Displays video if a table cell is clicked **/
+function displayVideo() {
+    var modal = document.getElementById('myModal')
+    var span = document.getElementsByClassName("close")[0]
+    span.onclick = function () {
+        modal.style.display = "none"
+
+    }
+    document.querySelectorAll('td')
+        .forEach(e => e.addEventListener("click", function () {
+            if (patientsConfidence[usernamesList[e.id]] != undefined) {
+                for (var i = 0; i < Object.keys(patientsConfidence[usernamesList[e.id]]['timestamp']).length; i++) {
+                    if (patientsConfidence[usernamesList[e.id]]['timestamp'][i] == e.innerHTML) {
+                        if (patientsConfidence[usernamesList[e.id]]['videos'][i] != undefined && patientsConfidence[usernamesList[e.id]]['videos'][i] != "") {
+                            firebase.storage().ref(patientsConfidence[usernamesList[e.id]]['videos'][i]).getDownloadURL().then(url => {
+                                modal.style.display = "block"
+                                var video = document.getElementById('video')
+                                var source = document.getElementById('source')
+                                var patientHeader = document.getElementById("patientHeader")
+                                var patientTimestamp = document.getElementById("patientTimestamp")
+                                patientHeader.innerHTML = "Currently viewing: "+  usernamesList[e.id]
+                                console.log(patientsConfidence[usernamesList[e.id]]['timestamp'][i])
+                                patientTimestamp.innerHTML = "Recorded on: " + e.innerHTML
+                                source.src = url
+                                source.type = "video/mp4"
+                                modal.style.display = "block";
+                                video.load()
+                            })
+                        }
+                        else
                         {
-                            console.log(patientsConfidence[usernamesList[e.id]]['videos'][i])
+                            modal.style.display = "none"
                         }
                     }
                 }
-            }));
-        })
-    });
+            }
+        }));
 }
 
 getPatientData()

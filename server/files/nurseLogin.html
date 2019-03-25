@@ -1,7 +1,9 @@
 <!DOCTYPE html>
 <html>
-
 <head>
+
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+    
     <title>Nurse Login</title>
     <style>
       @font-face {
@@ -11,6 +13,26 @@
       html {
         min-height: 100%;
       }
+      #signIn{
+        margin-top: 40px;
+        width:300px;
+        background-color: #F0EEEE;
+        padding: 30px;
+        border-radius: 15px;
+        height:260px;
+        text-align: left
+      }
+      #button{
+        float: right;
+      }
+      #password
+      {
+        width:100%;
+      }
+      #email
+      {
+        width:100%;
+      }
       body{
         background: -webkit-linear-gradient(#008577, #80fff2);
         background: -o-linear-gradient(#008577, #80fff2);
@@ -18,9 +40,13 @@
         background: linear-gradient(#008577, #80fff2);
         background-color: #93B874;
         font-family: roboto;
+        margin: 0 auto;
+        width: 300px;
       }
       h1{
-        text-align:left;
+        text-align:center;
+        margin-top: 40px;
+        color: #FFFFFF;
       }
       label{
         display: inline-block;
@@ -28,6 +54,7 @@
         clear: left;
         width: 100px;
         text-align: left;
+        padding-bottom: 10px;
       }
       </style>
       <script src="https://www.gstatic.com/firebasejs/5.8.6/firebase.js"></script>
@@ -53,19 +80,23 @@
 </head>
 
 <body>
-  <h1><font size=5 color=#ffffff >TaBlet Tracker - Login</font></h1>
+  <h1>TaBlet Tracker</h1>
+  <div id="signIn">
     <form action="/nurseLogin" method="post">
-        <div><font size=3 color=#ffffff >
-          <label for="email">E-mail:</label></font> <input type="email" id="email" name="nurse_mail">
+          <div class="form-group" font size=3 color=#ffffff>
+          <label for="email">E-mail:</label></font> 
+          <input type="email" id="email" name="nurse_mail">
         </div>
-        <div><font size=3 color=#ffffff >
-          <label for="password">Password:</label></font> <input type="password" id="password" name="nurse_password">
+        <div class="form-group" font size=3 color=#ffffff>
+          <label for="password">Password:</label></font> 
+          <input type="password" id="password" name="nurse_password">
         </div>
         <div class="button">
-          <input type="button" name="signin" value="Sign in" onclick= "signIn()" >
+          <input type="button" id="button" class="btn btn-primary" name="signin" value="Sign in" onclick= "signIn()" >
         </div>
         <p id="message" ></p>
     </form>
+  </div>
 </body>
 
 <script>
