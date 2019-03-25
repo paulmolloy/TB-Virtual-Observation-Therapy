@@ -86,7 +86,7 @@ public class VotCamera extends Fragment implements CameraBridgeViewBase.CvCamera
     private MediaRecorder mMediaRecorder;
     private MediaProjectionManager mProjectionManager;
     private boolean recording = false;
-    private int VIDEO_BITRATE = 512 * 1000;// 40000;
+    private int VIDEO_BITRATE = 512 * 2000;// 40000;
     private PillIntakeGuide guide;
     private Confidence confidence;
 
