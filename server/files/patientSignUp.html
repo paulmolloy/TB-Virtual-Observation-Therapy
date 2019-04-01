@@ -7,11 +7,18 @@
 
 <head>
   <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
-        
+
   <script
   src="http://code.jquery.com/jquery-3.3.1.min.js"
   integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8="
-  crossorigin="anonymous"></script>
+  crossorigin="anonymous">
+  </script>
+
+  <script type="text/javascript">
+    var count = o;
+    var fields = [0];
+  </script>
+
     <title>Patient sign up form</title>
     <style>
       @font-face {
@@ -79,27 +86,42 @@
   <div id="signup">
   <form action="/patientSignedUp" method="post">
     <div class="form-group" >
-          <label for="patientname">Patient name:</label></font> 
+          <label for="patientname">Patient name:</label></font>
           <input type="text" id="patientname" name="patient_name">
         </div>
         <div class="form-group" >
-          <label for="email">E-mail:</label></font> 
+          <label for="email">E-mail:</label></font>
           <input type="email" id="email" name="patient_mail">
         </div>
         <div class="form-group" >
-          <label for="password">Password:</label></font> 
+          <label for="password">Password:</label></font>
           <input type="password" id="password" name="patient_password">
         </div>
         <div class="form-group" >
-          <label for="nurseid">Nurse ID:</label></font> 
-          <input type="text" id="nurseid" name="patient_mail">
+          <label for="nurseid">Nurse ID:</label></font>
+          <input type="text" id="nurseid" name="nurse_id">
+        </div>
+        <div class="form-group" >
+          <label for="authtoken">Auth Token:</label></font>
+          <input type="text" id="authtoken" name="auth_token">
+        </div>
+        <div class="form-group" >
+          <label for="field">Add field:</label></font>
+          <input type="text" id="field" name="field">
+        </div>
+        <div class="form-group" >
+          <label for="fieldvalue">Add field value:</label></font>
+          <input type="text" id="fieldvalue" name="fieldvalue">
+        </div>
+        <div class="button">
+          <input type="button" id="button" class="btn btn-primary" name="add" value="Add" onclick= "addField(); fieldArray('fieldvalue');" >
         </div>
         <div class="button">
           <input type="button" id="button" class="btn btn-primary" name="signup" value="Sign Up" onclick= "getValues()" >
         </div>
         <p id="message" ></p>
     </form>
-  </div> 
+  </div>
 </body>
 
 <script type="text/javascript">
@@ -119,8 +141,34 @@
     var email = document.getElementById('email').value;
     var password = document.getElementById('password').value;
     var nurseid = document.getElementById('nurseid').value;
-    $.ajax('/api/insecure/add-patient?name=' + patientname + '&email=' + email + '&password=' + password + '&nurseID=' + nurseid).then(()=>redirect())
+    var authtoken = document.getElementById('authtoken').value;
+    var url = '/api/insecure/add-patient?name=' + patientname + '&email=' + email + '&password=' + password + '&nurseID=' + nurseid + '&authtoken=' + authtoken;
+
+    for(var x = 0; x<array.length; x++)
+    {
+      url = url + '&field' + x+1 + '=' + fields[x];
+    }
+
+    $.ajax().then(()=>redirect())
   }
+
+  function addField()
+  {
+    var field = document.getElementById('field').value;
+    var fieldvalue = document.getElementById('fieldvalue').value;
+    var cityRef = db.collection('cities').doc('BJ');
+
+    var setWithMerge = cityRef.set({
+        capital: true
+    }, { merge: true });
+  }
+
+  function fieldArray(var id)
+  {
+    fields[count] = document.getElementById(id).value;
+    count++;
+  }
+
 </script>
 
 </html>

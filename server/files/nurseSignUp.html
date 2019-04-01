@@ -4,10 +4,10 @@
 
     <!DOCTYPE html>
     <html>
-    
+
     <head>
         <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
-        
+
         <script
         src="http://code.jquery.com/jquery-3.3.1.min.js"
         integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8="
@@ -88,21 +88,21 @@
         firebase.initializeApp(config);
         </script>
     </head>
-    
+
     <body>
       <h1><font size=5 color=#ffffff >Patient Sign Up Form</font></h1>
       <div id="signup">
         <form action="/nurseSignedUp" method="post">
           <div class="form-group" >
-              <label for="nursename">Nurse name:</label></font> 
+              <label for="nursename">Nurse name:</label></font>
               <input type="text" id="nursename" name="nurse_name">
             </div>
-            <div class="form-group" 
-              <label for="email">E-mail:</label></font> 
+            <div class="form-group"
+              <label for="email">E-mail:</label></font>
               <input type="email" id="email" name="nurse_mail">
             </div>
-            <div class="form-group" 
-              <label for="password">Password:</label></font> 
+            <div class="form-group"
+              <label for="password">Password:</label></font>
               <input type="password" id="password" name="nurse_password">
             </div>
             <div class="button">
@@ -112,18 +112,18 @@
         </form>
       </div>
     </body>
-    
+
     <script type="text/javascript">
-    
+
       function setMessage(message){
           document.getElementById("message").textContent = message
       }
-    
+
       function redirect(){
           setMessage("Redirecting... ")
           window.location.replace("/graph")
       }
-    
+
       function getValues()
       {
         var nursename = document.getElementById('nursename').value;
@@ -132,6 +132,5 @@
         $.ajax('/api/insecure/add-nurse?name=' + nursename + '&email=' + email + '&password=' + password).then(()=>redirect())
       }
     </script>
-    
+
     </html>
-    

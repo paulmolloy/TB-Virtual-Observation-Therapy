@@ -42,7 +42,7 @@ def insecurely_add_nurse():
 @users_blueprint.route('/api/patients', methods=["POST"])
 def add_patient():
     """Expects a JSON that looks like this to be POSTed:
-    
+
     {
         name: string
         email: string
@@ -64,7 +64,7 @@ def add_patient():
 @users_blueprint.route('/api/nurses', methods=["POST"])
 def add_nurse():
     """Expects a JSON that looks like this to be POSTed:
-    
+
     {
         name: string
         email: string
@@ -109,7 +109,7 @@ def create_nurse(name, email, password):
 
     success, uid = create_account(email, password)
 
-    if not success: 
+    if not success:
         return jsonify({ 'status': "failed", 'error': uid })
 
     doc = { 'name': name, 'email': email }
@@ -124,7 +124,7 @@ def create_patient(name, email, password, nurseID):
 
     success, uid = create_account(email, password)
 
-    if not success: 
+    if not success:
         return jsonify({ 'status': "failed", 'error': uid })
 
     doc = { 'name': name, 'email': email, 'nurseID': nurseID }
