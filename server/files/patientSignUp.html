@@ -15,7 +15,6 @@
   </script>
 
   <script type="text/javascript">
-    var count = o;
     var fields = [0];
   </script>
 
@@ -78,6 +77,25 @@
         text-align: left;
       }
     </style>
+    <script src="https://www.gstatic.com/firebasejs/5.8.6/firebase.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/5.8.5/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/5.8.6/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/5.8.6/firebase-database.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/5.8.6/firebase-firestore.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/5.8.6/firebase-messaging.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/5.8.6/firebase-functions.js"></script>
+    <script>
+    // Initialize Firebase
+    var config = {
+      apiKey: "AIzaSyAgQbVptjsQH0p-4YgJtaCWIQtXaS_SyhE",
+      authDomain: "tb-vot.firebaseapp.com",
+      databaseURL: "https://tb-vot.firebaseio.com",
+      projectId: "tb-vot",
+      storageBucket: "tb-vot.appspot.com",
+      messagingSenderId: "80680232908"
+    };
+    firebase.initializeApp(config);
+    </script>
 </head>
 </head>
 
@@ -105,17 +123,6 @@
           <label for="authtoken">Auth Token:</label></font>
           <input type="text" id="authtoken" name="auth_token">
         </div>
-        <div class="form-group" >
-          <label for="field">Add field:</label></font>
-          <input type="text" id="field" name="field">
-        </div>
-        <div class="form-group" >
-          <label for="fieldvalue">Add field value:</label></font>
-          <input type="text" id="fieldvalue" name="fieldvalue">
-        </div>
-        <div class="button">
-          <input type="button" id="button" class="btn btn-primary" name="add" value="Add" onclick= "addField(); fieldArray('fieldvalue');" >
-        </div>
         <div class="button">
           <input type="button" id="button" class="btn btn-primary" name="signup" value="Sign Up" onclick= "getValues()" >
         </div>
@@ -137,38 +144,37 @@
 
   function getValues()
   {
-    var patientname = document.getElementById('patientname').value;
-    var email = document.getElementById('email').value;
-    var password = document.getElementById('password').value;
-    var nurseid = document.getElementById('nurseid').value;
-    var authtoken = document.getElementById('authtoken').value;
-    var url = '/api/insecure/add-patient?name=' + patientname + '&email=' + email + '&password=' + password + '&nurseID=' + nurseid + '&authtoken=' + authtoken;
+    firebase.auth().currentUser.getIdToken().then(authToken => {
 
-    for(var x = 0; x<array.length; x++)
-    {
-      url = url + '&field' + x+1 + '=' + fields[x];
-    }
+      var patientname = document.getElementById('patientname').value;
+      var email = document.getElementById('email').value;
+      var password = document.getElementById('password').value;
+      var nurseID = firebase.auth().currentUser.uid;
 
-    $.ajax().then(()=>redirect())
+      var upload = { name: patientname, email, password, nurseID, authToken }
+
+      $.ajax({
+            type: "POST",
+            url: "/api/patients",
+            contentType: "application/json",
+            data: JSON.stringify(upload),
+            success: function (msg)
+            {
+                var patientID = msg.data.uid
+
+                firebase.firestore().doc("patients/" + patientID).set
+                (
+                  {
+                    streak: 0,
+                    takenToday: false,
+                    timeToTake: "14:00"
+                  },
+                  { merge: true }
+                )
+            }
+          });
+    })
   }
-
-  function addField()
-  {
-    var field = document.getElementById('field').value;
-    var fieldvalue = document.getElementById('fieldvalue').value;
-    var cityRef = db.collection('cities').doc('BJ');
-
-    var setWithMerge = cityRef.set({
-        capital: true
-    }, { merge: true });
-  }
-
-  function fieldArray(var id)
-  {
-    fields[count] = document.getElementById(id).value;
-    count++;
-  }
-
 </script>
 
 </html>

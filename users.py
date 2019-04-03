@@ -54,7 +54,8 @@ def add_patient():
     """
 
     json = request.get_json()
-
+    print("The JSON:", json)
+    # print(json['authToken'])
     if not verify_auth_token(json['authToken']):
         return jsonify({ 'status': "failed", "error": "There's something wrong with the auth token" })
 
