@@ -74,7 +74,7 @@ public class PillDetector {
 
     }
     public Mat process(Mat colorImage) {
-
+        Log.d(TAG, "processing pill detection");
         if (pillDetected) {
             // clone frame because original frame needed for display
             Mat frame = colorImage.clone();
@@ -85,10 +85,11 @@ public class PillDetector {
             Core.inRange(frame, minHSV, maxHSV, frame);
 
             List<MatOfPoint> contours =  getAllContours(frame);
-            for(MatOfPoint c : contours) {
-                Rect rect = Imgproc.boundingRect(c);
-                Imgproc.rectangle(colorImage, rect.br(), rect.tl(), new Scalar(0, 255, 255, 255), 3);
-            }
+            // Uncomment to display all contours.
+//            for(MatOfPoint c : contours) {
+//                Rect rect = Imgproc.boundingRect(c);
+//                Imgproc.rectangle(colorImage, rect.br(), rect.tl(), new Scalar(0, 255, 255, 255), 3);
+//            }
             int indexOfPillContour = getNearestPillContour(contours);
 
             if(indexOfPillContour < 0)
@@ -97,7 +98,7 @@ public class PillDetector {
                 Rect rect = Imgproc.boundingRect(contours.get(indexOfPillContour));
                 lastPillCenter.x = rect.x + rect.width/2;
                 lastPillCenter.y = rect.y + rect.height/2;
-                Imgproc.rectangle(colorImage, rect.br(), rect.tl(), new Scalar(0, 255, 0, 255), 3);
+                Imgproc.rectangle(colorImage, rect.br(), rect.tl(), new Scalar(255, 0, 0, 255), 3);
             }
         }
         return colorImage;
