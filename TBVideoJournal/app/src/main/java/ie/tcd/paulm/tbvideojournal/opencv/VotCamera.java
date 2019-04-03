@@ -67,6 +67,7 @@ public class VotCamera extends Fragment implements CameraBridgeViewBase.CvCamera
     private Mat mRgbaF;
     private Mat mRgbaT;
     private FaceDetector faceDetector;
+    private PillDetector pillDetector;
     // FPS Debugging.
     private int mFPS;
     private long startTime;
@@ -183,6 +184,9 @@ public class VotCamera extends Fragment implements CameraBridgeViewBase.CvCamera
         mRgbaT = new Mat(width, width, CvType.CV_8UC4);
         grayscaleImageRot= new Mat(width, width, CvType.CV_8UC4);
         faceDetector = new FaceDetector(getContext(), height);
+        pillDetector = new PillDetector(getContext(), height);
+        pillDetector.setScaleFactors(width, height, mOpenCvCameraView.getWidth(), mOpenCvCameraView.getHeight());
+
     }
 
     @Override
@@ -214,6 +218,7 @@ public class VotCamera extends Fragment implements CameraBridgeViewBase.CvCamera
 
         // Use the classifier to detect faces
         colorImage = faceDetector.process(colorImage, grayscaleImageRot);
+        colorImage = pillDetector.process(colorImage);
         confidence.addFaceConfidence(faceDetector.getConfidence());
 
         // Keep track of what the FPS is.
