@@ -91,6 +91,8 @@ public class VotCamera extends Fragment implements CameraBridgeViewBase.CvCamera
     private int VIDEO_BITRATE = 512 * 2000;// 40000;
     private PillIntakeGuide guide;
     private Confidence confidence;
+    private enum Step {EMPTY, FACE, PILL, SWALLOW}
+    private Step currentStep;
 
 
 
@@ -128,7 +130,7 @@ public class VotCamera extends Fragment implements CameraBridgeViewBase.CvCamera
         startTime = 0;
         currentTime = 1000;
         fpsTextView = (TextView) view.findViewById(R.id.fps_tv);
-
+        fpsTextView.setVisibility(View.GONE);
         guide = new PillIntakeGuide((MainActivity)getActivity(), (RelativeLayout)view);
         File root = Environment.getExternalStorageDirectory();
 
@@ -147,13 +149,29 @@ public class VotCamera extends Fragment implements CameraBridgeViewBase.CvCamera
                 startRecording();
                 recording = true;
             }
+            switch (step){
+                case 0:
+                    currentStep = Step.PILL;
+                    pillDetector.resetPillDetector();
+                    break;
+                case 1:
+                    currentStep = Step.SWALLOW;
+                    break;
+                case 2:
+                    currentStep = Step.EMPTY;
+                    break;
+                case 3:
+                default:
+                    currentStep = Step.FACE;
+            }
             return Unit.INSTANCE;
         });
         guide.onStepCompleted((pill, step) -> {
             float stepConfidence = confidence.getConfidence();
+            if (currentStep == Step.PILL) pillDetector.updatePillColorSample(colorImage);
             confidence.reset();
+
             return stepConfidence;
-            // ↑ This will eventually need to return the real confidence value that was just calculated for the current step
         });
         guide.onAllPillsTaken(timestampsAndConfidences -> {
             if(recording) {
@@ -171,7 +189,7 @@ public class VotCamera extends Fragment implements CameraBridgeViewBase.CvCamera
 
                 if(event.getAction() == MotionEvent.ACTION_DOWN){
                     Log.d(TAG, "update sample");
-                    return pillDetector.updatePillColorSample(event, colorImage);
+                    return pillDetector.updatePillColorSample(colorImage);
                 }
                 return true;
             }
@@ -196,7 +214,7 @@ public class VotCamera extends Fragment implements CameraBridgeViewBase.CvCamera
         mRgbaT = new Mat(width, width, CvType.CV_8UC4);
         grayscaleImageRot= new Mat(width, width, CvType.CV_8UC4);
         faceDetector = new FaceDetector(getContext(), height);
-        pillDetector = new PillDetector(getContext(), height);
+        pillDetector = new PillDetector(getContext(), height, width);
         pillDetector.setScaleFactors(width, height, mOpenCvCameraView.getWidth(), mOpenCvCameraView.getHeight());
     }
 
@@ -228,8 +246,10 @@ public class VotCamera extends Fragment implements CameraBridgeViewBase.CvCamera
         Core.flip(mRgbaF, grayscaleImageRot,  0 ); // both vertical top bottom
 
         // Use the classifier to detect faces
-        colorImage = faceDetector.process(colorImage, grayscaleImageRot);
-        colorImage = pillDetector.process(colorImage);
+        if(currentStep == Step.PILL || currentStep == Step.SWALLOW)
+            colorImage = pillDetector.process(colorImage);
+        if(currentStep != Step.PILL)
+            colorImage = faceDetector.process(colorImage, grayscaleImageRot);
         confidence.addFaceConfidence(faceDetector.getConfidence());
 
         // Keep track of what the FPS is.

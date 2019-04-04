@@ -42,10 +42,12 @@ public class PillDetector {
     private Point lastPillCenter;
     private Date currentTime;
     private Date lastTouch;
+    private int vidHeight, vidWidth;
+    private Point detectCenter;
 
 
 
-    public PillDetector(Context context, int height){
+    public PillDetector(Context context, int height,  int width){
         // The faces will be ~ 20% of the height of the screen.
         absoluteFaceSize = (int) (height * 0.2);
         try {
@@ -71,6 +73,11 @@ public class PillDetector {
         minHSV = new Scalar(3);
         maxHSV = new Scalar(3);
         lastPillCenter = new Point(-1, -1);
+        detectCenter = new Point(width/2, height/2);
+
+
+    }
+    public void setPill() {
 
     }
     public Mat process(Mat colorImage) {
@@ -100,6 +107,11 @@ public class PillDetector {
                 lastPillCenter.y = rect.y + rect.height/2;
                 Imgproc.rectangle(colorImage, rect.br(), rect.tl(), new Scalar(255, 0, 0, 255), 3);
             }
+        }else {
+            int detectRadius = this.vidWidth/5;
+            int thickness = 5;
+
+            Imgproc.circle(colorImage, detectCenter, detectRadius, new Scalar(255, 255, 255, 255), thickness);
         }
         return colorImage;
     }
@@ -114,12 +126,29 @@ public class PillDetector {
 
         Rect rect;
         int indexOfMaxContour = -1;
+        Log.d(TAG, "Pill distances:");
+        double nearest = Double.MAX_VALUE;
+        int nearestIndex = -1;
         for (int i = 0; i < contours.size(); i++) {
+
             rect = Imgproc.boundingRect(contours.get(i));
+            int xMid = rect.x + rect.width/2;
+            int yMid = rect.y + rect.height/2;
+            double dist = euclidianDist(new Point(xMid, yMid), lastPillCenter);
+            if(dist <= nearest) nearestIndex = i;
+            Log.d(TAG, i + "Pill distances: " + dist );
             if(rect.contains(lastPillCenter))
                 return i;
         }
         return indexOfMaxContour;
+    }
+
+    private double euclidianDist(Point a, Point b) {
+        Double xDiff = a.x - b.x;
+        Double yDiff = a.y - b.y;
+        return Math.sqrt(Math.pow(xDiff,2) + Math.pow(yDiff, 2));
+
+
     }
 
 
@@ -189,6 +218,8 @@ public class PillDetector {
 
     // setScaleFactors scales the touch coords to opencv frame coords.
     public void setScaleFactors(int vidWidth, int vidHeight, float deviceWidth, float deviceHeight){
+        this.vidWidth = vidWidth;
+        this.vidHeight = vidHeight;
         if(deviceHeight - vidHeight < deviceWidth - vidWidth){
             float temp = vidWidth * deviceHeight / vidHeight;
             offsetFactY = 0;
@@ -205,47 +236,30 @@ public class PillDetector {
         }
     }
 
+    public void resetPillDetector(){
+        pillDetected = false;
+    }
+
     // updatePillColorSample recalibrates the system to use colors at event as the colors to
     // look for.
-    public boolean updatePillColorSample(MotionEvent event, Mat colorImage) {
-        Log.d(TAG, "Got touch");
-        currentTime = Calendar.getInstance().getTime();
-        // Only update color on touches at least 2 seconds apart to avoid multiple touch events
-        // at once.
-        if (lastTouch != null) Log.d(TAG, "touch Cur time: " + currentTime.getTime() + "last time: " + lastTouch.getTime());
-        if(lastTouch == null || currentTime.getTime() > lastTouch.getTime() + 200){ // .2 second cooldown before re-samples
-            if(true) {
+    public boolean updatePillColorSample(Mat colorImage) {
+
                 lastTouch = currentTime;
-                Log.d(TAG, "Set last touch");
-                Log.d(TAG, "Channels before ycc: " + colorImage.channels());
+                Log.d(TAG, "Sampled pill");
 
                 // clone and blur touched frame
                 Mat frame = colorImage.clone();
-                Log.d(TAG, "Channels before fClone: " + frame.channels());
                 Mat frameOut = new Mat();
                 Imgproc.GaussianBlur(frame, frameOut, new Size(9, 9), 5);
-                Log.d(TAG, "Channels blur Clone: " + frameOut.channels());
-                Log.d(TAG, "Channels blur: " + frame.channels());
 
-                // calculate x, y coords because resolution is scaled on device display
-                int x = Math.round((event.getX() - offsetFactX) * scaleFactX);
-                int y = Math.round((event.getY() - offsetFactY) * scaleFactY);
-
-                int rows = frameOut.rows();
-                int cols = frameOut.cols();
-
-                // return if touched point is outside camera resolution
-                if ((x < 0) || (y < 0) || (x > cols) || (y > rows)) return false;
 
                 // set pill center point and average HSV value
-                lastPillCenter.x = x;
-                lastPillCenter.y = y;
-                Log.d(TAG, "Channels before: " + frameOut.channels());
+                lastPillCenter.x = detectCenter.x;
+                lastPillCenter.y = detectCenter.y;
                 getAvgHSV(frameOut);
 
                 pillDetected = true;
-            }
-        }
+
         return true;
     }
 
