@@ -94,6 +94,7 @@ public class VotCamera extends Fragment implements CameraBridgeViewBase.CvCamera
     private Confidence confidence;
     private enum Step {EMPTY, FACE, PILL, SWALLOW}
     private Step currentStep;
+    private static final float scaleFactor = 1.5f;
 
 
 
@@ -135,9 +136,9 @@ public class VotCamera extends Fragment implements CameraBridgeViewBase.CvCamera
         Log.d(TAG, "Vid height: " + mOpenCvCameraView.getHeight() + " width: " + mOpenCvCameraView.getWidth());
         mOpenCvCameraView.enableFpsMeter();
         // Magic number
-        mOpenCvCameraView.setScaleX(1.5f);
-        mOpenCvCameraView.setScaleY(1.5f);
-//        mOpenCvCameraView.setMaxFrameSize(1000,2000);
+        mOpenCvCameraView.setScaleX(scaleFactor);
+        mOpenCvCameraView.setScaleY(scaleFactor);
+        mOpenCvCameraView.setMaxFrameSize(1000,2000);
         mOpenCvCameraView.setVisibility(SurfaceView.VISIBLE);
         mOpenCvCameraView.setCvCameraViewListener(this);
 
@@ -227,7 +228,7 @@ public class VotCamera extends Fragment implements CameraBridgeViewBase.CvCamera
         mRgbaF = new Mat(height, width, CvType.CV_8UC4);
         mRgbaT = new Mat(width, width, CvType.CV_8UC4);
         grayscaleImageRot= new Mat(width, width, CvType.CV_8UC4);
-        faceDetector = new FaceDetector(getContext(), height);
+        faceDetector = new FaceDetector(getContext(), height, scaleFactor);
         pillDetector = new PillDetector(getContext(), height, width);
         pillDetector.setScaleFactors(width, height, mOpenCvCameraView.getWidth(), mOpenCvCameraView.getHeight());
     }

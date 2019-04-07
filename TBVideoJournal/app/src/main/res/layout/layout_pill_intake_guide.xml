@@ -7,7 +7,7 @@
 
     <android.support.constraint.ConstraintLayout
         android:layout_width="0dp"
-        android:layout_height="113dp"
+        android:layout_height="106dp"
         android:background="#FFF"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"

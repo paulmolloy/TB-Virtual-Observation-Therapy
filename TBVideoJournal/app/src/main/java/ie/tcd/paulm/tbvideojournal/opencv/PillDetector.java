@@ -73,7 +73,7 @@ public class PillDetector {
         minHSV = new Scalar(3);
         maxHSV = new Scalar(3);
         lastPillCenter = new Point(-1, -1);
-        detectCenter = new Point(width/2, height/2);
+        detectCenter = new Point(width/2, 2*height/3);
 
 
     }
@@ -108,7 +108,7 @@ public class PillDetector {
                 Imgproc.rectangle(colorImage, rect.br(), rect.tl(), new Scalar(255, 0, 0, 255), 3);
             }
         }else {
-            int detectRadius = this.vidWidth/5;
+            int detectRadius = this.vidWidth/8;
             int thickness = 5;
 
             Imgproc.circle(colorImage, detectCenter, detectRadius, new Scalar(255, 255, 255, 255), thickness);

@@ -26,12 +26,14 @@ public class FaceDetector {
     private MatOfRect faces;
     private static CascadeClassifier cascadeClassifier;
     private static int absoluteFaceSize;
+    private float scaleFactor;
 
 
 
-    public FaceDetector(Context context, int height){
+    public FaceDetector(Context context, int height, float scaleFactor){
         // The faces will be ~ 20% of the height of the screen.
-        absoluteFaceSize = (int) (height * 0.3);
+        absoluteFaceSize = (int) (height * 0.4);
+        this.scaleFactor = scaleFactor;
         try {
             // Copy the resource into a temp file so OpenCV can load it
             InputStream is = context.getResources().openRawResource(R.raw.lbpcascade_frontalface);
@@ -63,13 +65,11 @@ public class FaceDetector {
             // Got to feed in a square image
             Log.d(TAG, "proccolorface: " + colorImage.width() + "h: " + colorImage.height());
             Log.d(TAG, "procgreyface: " + grayscaleImageRot.width() + "h: " + grayscaleImageRot.height());
-            cascadeClassifier.detectMultiScale(grayscaleImageRot.submat(0,1080,0,1080), faces, 1.8, 2, 2,
+            cascadeClassifier.detectMultiScale(grayscaleImageRot, faces, 1.05, 2, 2,
                     new Size(absoluteFaceSize, absoluteFaceSize), new Size(absoluteFaceSize*2, absoluteFaceSize*2));// a different type of scale factor.
         }
 
         Log.d(TAG, "Face image size width:" + colorImage.width() + "Height: " + colorImage.height());
-
-        Imgproc.rectangle(colorImage, new Point(0,0), new Point(1080,1080), new Scalar(200, 200, 200, 255), 3);
         // If there are any faces found, draw a rectangle around it
         Rect[] facesArray = faces.toArray();
         for (int i = 0; i <facesArray.length; i++) {
@@ -79,8 +79,11 @@ public class FaceDetector {
 
             //Imgproc.rectangle(colorImage, recRotScaled.br(), recRotScaled.tl(), new Scalar(0, 255, 255, 255), 3);
 
-            Rect recRot = new Rect(colorImage.height()-facesArray[i].y-facesArray[i].height,colorImage.width()-facesArray[i].x-facesArray[i].width,
-                    facesArray[i].height, facesArray[i].width);
+            // Added some scaling that to deal with the different camera resolution + scaleFactor to
+            // make it fill the screen feels kinda hacky and I don't know why one axis needs to be
+            // multiplied by the inverse of the scale factor but it just works.
+            Rect recRot = new Rect(scalePosition(colorImage.height()-facesArray[i].y-facesArray[i].height),invScalePosition(colorImage.width()-facesArray[i].x-facesArray[i].width),
+                    invScalePosition(facesArray[i].height), invScalePosition(facesArray[i].width));
             Imgproc.rectangle(colorImage, recRot.br(), recRot.tl(), new Scalar(0, 255, 0, 255), 3);
             Log.d(TAG, "Face image x:" + facesArray[i].x + " y: " + facesArray[i].y);
 
@@ -92,7 +95,10 @@ public class FaceDetector {
     }
 
     private int scalePosition(int position) {
-        return (int) Math.round(position * 1.5);
+        return (int) Math.round(position * scaleFactor);
+    }
+    private int invScalePosition(int position) {
+        return (int) Math.round(position * 1/scaleFactor);
     }
 
     public int getConfidence() {
