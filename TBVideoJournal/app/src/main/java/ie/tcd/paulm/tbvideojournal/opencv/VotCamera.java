@@ -96,7 +96,7 @@ public class VotCamera extends Fragment implements CameraBridgeViewBase.CvCamera
     private Step currentStep;
     // Magic number scales to get rid of black bars without losing part of camera.
     private static final float scaleFactor = 1.30f;
-    private boolean dontRecordDemo = true;
+    private boolean dontRecordDemo = false;
 
 
 
@@ -162,21 +162,29 @@ public class VotCamera extends Fragment implements CameraBridgeViewBase.CvCamera
                 case 0:
                     currentStep = Step.PILL;
                     pillDetector.resetPillDetector();
+                    Log.d(TAG, "Step started pill");
                     break;
                 case 1:
                     currentStep = Step.SWALLOW;
+                    Log.d(TAG, "Step started swallow");
+
                     break;
                 case 2:
                     currentStep = Step.EMPTY;
+                    Log.d(TAG, "Step started Empty");
+
                     break;
                 case 3:
                 default:
                     currentStep = Step.FACE;
+                    Log.d(TAG, "Step started face");
+
             }
             return Unit.INSTANCE;
         });
         guide.onStepCompleted((pill, step) -> {
             float stepConfidence = confidence.getConfidence();
+            Log.d(TAG, "Step confidence " + step + ": " + stepConfidence );
             if (currentStep == Step.PILL) pillDetector.updatePillColorSample(colorImage);
             confidence.reset();
 
@@ -224,7 +232,6 @@ public class VotCamera extends Fragment implements CameraBridgeViewBase.CvCamera
         grayscaleImageRot= new Mat(width, width, CvType.CV_8UC4);
         faceDetector = new FaceDetector(getContext(), height, scaleFactor);
         pillDetector = new PillDetector(getContext(), height, width);
-        pillDetector.setScaleFactors(width, height, mOpenCvCameraView.getWidth(), mOpenCvCameraView.getHeight());
     }
 
     @Override
@@ -256,13 +263,20 @@ public class VotCamera extends Fragment implements CameraBridgeViewBase.CvCamera
         Core.transpose(grayscaleImage, mRgbaT);
         Imgproc.resize(mRgbaT, mRgbaF, mRgbaF.size(), 0,0, 0);
         Core.flip(mRgbaF, grayscaleImageRot,  0 ); // both vertical top bottom
+        Rect[] facesArray = faceDetector.process(colorImage, grayscaleImageRot);
+
 
         // Use the classifier to detect faces
         if(currentStep == Step.PILL || currentStep == Step.SWALLOW)
-            colorImage = pillDetector.process(colorImage);
-        if(currentStep != Step.PILL)
-            colorImage = faceDetector.process(colorImage, grayscaleImageRot);
-        confidence.addFaceConfidence(faceDetector.getConfidence());
+            colorImage = pillDetector.process(facesArray, colorImage);
+            confidence.addPillConfidence(pillDetector.getConfidence());
+            confidence.setIsSwallowed(pillDetector.isSwallowed());
+        if(currentStep != Step.PILL) {
+            confidence.addFaceConfidence(faceDetector.getConfidence());
+        }
+        for(Rect face : facesArray)
+            Imgproc.rectangle(colorImage, face.br(), face.tl(), new Scalar(0, 255, 0, 255), 3);
+
 
         // Keep track of what the FPS is.
         getActivity().runOnUiThread(new Runnable() {

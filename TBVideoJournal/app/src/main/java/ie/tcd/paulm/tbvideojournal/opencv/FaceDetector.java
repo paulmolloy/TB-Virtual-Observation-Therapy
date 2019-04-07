@@ -58,7 +58,7 @@ public class FaceDetector {
         }
 
     }
-    public Mat process(Mat colorImage, Mat grayscaleImageRot) {
+    public Rect[] process(Mat colorImage, Mat grayscaleImageRot) {
         // Use the classifier to detect faces
         faces = new MatOfRect();
         if (cascadeClassifier != null) {
@@ -80,14 +80,14 @@ public class FaceDetector {
             // height/2 is to make the box just the mouth instead of the the full face.
             Rect recRot = new Rect((colorImage.height()-facesArray[i].y-facesArray[i].height),(colorImage.width()-facesArray[i].x-facesArray[i].width),
                     facesArray[i].height/2, facesArray[i].width);
-            Imgproc.rectangle(colorImage, recRot.br(), recRot.tl(), new Scalar(0, 255, 0, 255), 3);
+            facesArray[i] = recRot;
             Log.d(TAG, "Face image x:" + facesArray[i].x + " y: " + facesArray[i].y);
 
 
         }
 
 
-        return colorImage;
+        return facesArray;
     }
 
     private int scalePosition(int position) {

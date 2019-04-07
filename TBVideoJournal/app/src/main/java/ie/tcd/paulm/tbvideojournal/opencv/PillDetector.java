@@ -31,42 +31,27 @@ public class PillDetector {
 
     private static final String  TAG              = "HandCamera";
 
-    private MatOfRect faces;
-    private static CascadeClassifier cascadeClassifier;
     private static int absoluteFaceSize;
-    private float offsetFactX, offsetFactY;
-    private float scaleFactX, scaleFactY;
     private boolean pillDetected = false;
     private Scalar minHSV;
     private Scalar maxHSV;
     private Point lastPillCenter;
-    private Date currentTime;
-    private Date lastTouch;
-    private int vidHeight, vidWidth;
+    private int height, width;
+    private Date lastTouch, currentTime;
     private Point detectCenter;
+    private int pillCount = 0;
+    private int atMouthCount = 0;
+    private boolean isSwallowed = false;
 
 
 
     public PillDetector(Context context, int height,  int width){
         // The faces will be ~ 20% of the height of the screen.
+        this.height = height;
+        this.width = width;
         absoluteFaceSize = (int) (height * 0.2);
         try {
-            // Copy the resource into a temp file so OpenCV can load it
-            InputStream is = context.getResources().openRawResource(R.raw.ok);
-            File cascadeDir = context.getDir("cascade", Context.MODE_PRIVATE);
-            File mCascadeFile = new File(cascadeDir, "ok.xml");
-            FileOutputStream os = new FileOutputStream(mCascadeFile);
 
-            byte[] buffer = new byte[4096];
-            int bytesRead;
-            while ((bytesRead = is.read(buffer)) != -1) {
-                os.write(buffer, 0, bytesRead);
-            }
-            is.close();
-            os.close();
-
-            // Load the cascade classifier
-            cascadeClassifier = new CascadeClassifier(mCascadeFile.getAbsolutePath());
         } catch (Exception e) {
             Log.e(TAG, "Error loading cascade", e);
         }
@@ -80,8 +65,9 @@ public class PillDetector {
     public void setPill() {
 
     }
-    public Mat process(Mat colorImage) {
+    public Mat process(Rect[] facesArray, Mat colorImage) {
         Log.d(TAG, "processing pill detection");
+        Log.d(TAG, "Step pill detected: " + pillDetected);
         if (pillDetected) {
             // clone frame because original frame needed for display
             Mat frame = colorImage.clone();
@@ -99,25 +85,62 @@ public class PillDetector {
 //            }
             int indexOfPillContour = getNearestPillContour(contours);
 
-            if(indexOfPillContour < 0)
+            //
+            if(indexOfPillContour < 0) {
                 Log.d(TAG, "No pill found in frame");
+                pillCount = 0;
+                if (atMouthCount > 2) {
+                    // If there was no pill found and the pill was within the mouth the last two
+                    // frames it was probably swallowed.
+                    isSwallowed = true;
+                    Log.d(TAG, "Step set swallowed: " + isSwallowed);
+
+                    atMouthCount = 0;
+
+                }
+            }
+            // Pill identified
             else{
+                pillCount++;
+                if(isSwallowed && pillCount > 2 ) {
+                    isSwallowed = false;
+                    Log.d(TAG, "Step set swallowed: " + isSwallowed);
+                }
                 Rect rect = Imgproc.boundingRect(contours.get(indexOfPillContour));
                 lastPillCenter.x = rect.x + rect.width/2;
                 lastPillCenter.y = rect.y + rect.height/2;
                 Imgproc.rectangle(colorImage, rect.br(), rect.tl(), new Scalar(255, 0, 0, 255), 3);
+                boolean atMouth = false;
+                // if the pill is over a mouth add to count otherwise reset count;
+                for(Rect face : facesArray) {
+                    if(!atMouth && face.contains(lastPillCenter)){
+                        atMouthCount++;
+                        atMouth = true;
+                    }
+                }
+                // if pill isn't at the mouth then reset the count of frames where it is at the
+                // mouth.
+                if(atMouth==false){
+                    atMouthCount=0;
+                }
             }
         }else {
-            int detectRadius = this.vidWidth/8;
+            int detectRadius = this.width/8;
             int thickness = 5;
-
+            // Draw pill start guide.
+            Log.d(TAG, "Step circle:" + detectCenter.x + " " + detectCenter.y);
             Imgproc.circle(colorImage, detectCenter, detectRadius, new Scalar(255, 255, 255, 255), thickness);
         }
         return colorImage;
     }
 
+    public boolean isSwallowed() {
+        return isSwallowed;
+    }
+
     public int getConfidence() {
-        if (faces.elemSize() > 0 ) return 1;
+        if (atMouthCount > 0 ) return 1;
+
         return 0;
     }
 
@@ -214,30 +237,15 @@ public class PillDetector {
 
 
 
-    // TODO(paulmolloy): All the code below not needed when pill detected from static location.
 
-    // setScaleFactors scales the touch coords to opencv frame coords.
-    public void setScaleFactors(int vidWidth, int vidHeight, float deviceWidth, float deviceHeight){
-        this.vidWidth = vidWidth;
-        this.vidHeight = vidHeight;
-        if(deviceHeight - vidHeight < deviceWidth - vidWidth){
-            float temp = vidWidth * deviceHeight / vidHeight;
-            offsetFactY = 0;
-            offsetFactX = (deviceWidth - temp) / 2;
-            scaleFactY = vidHeight / deviceHeight;
-            scaleFactX = vidWidth / temp;
-        }
-        else{
-            float temp = vidHeight * deviceWidth / vidWidth;
-            offsetFactX= 0;
-            offsetFactY = (deviceHeight - temp) / 2;
-            scaleFactX = vidWidth / deviceWidth;
-            scaleFactY = vidHeight / temp;
-        }
-    }
 
     public void resetPillDetector(){
+
         pillDetected = false;
+        lastPillCenter = new Point(-1,-1);
+        pillCount = 0;
+        atMouthCount = 0;
+        isSwallowed = false;
     }
 
     // updatePillColorSample recalibrates the system to use colors at event as the colors to
