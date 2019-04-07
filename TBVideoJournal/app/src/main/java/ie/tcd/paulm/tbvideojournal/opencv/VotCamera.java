@@ -4,6 +4,7 @@ package ie.tcd.paulm.tbvideojournal.opencv;
 
 import android.content.Context;
 import android.content.Intent;
+import android.hardware.Camera;
 import android.hardware.display.DisplayManager;
 import android.hardware.display.VirtualDisplay;
 import android.media.MediaRecorder;
@@ -124,13 +125,26 @@ public class VotCamera extends Fragment implements CameraBridgeViewBase.CvCamera
         getActivity().getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
         mOpenCvCameraView = view.findViewById(R.id.camera_surface_view);
+
+        Log.d(TAG, "Vid height: " + mOpenCvCameraView.getHeight() + " width: " + mOpenCvCameraView.getWidth());
+        android.graphics.Rect r;
+//        mOpenCvCameraView.getW
+//        mOpenCvCameraView.getWindowVisibleDisplayFrame(r);
+        //Log.d(TAG, "Vid actual height: " + r.height() + "Vid actual width: "  + r.width());
+
+        Log.d(TAG, "Vid height: " + mOpenCvCameraView.getHeight() + " width: " + mOpenCvCameraView.getWidth());
+        mOpenCvCameraView.enableFpsMeter();
+        // Magic number
+        mOpenCvCameraView.setScaleX(1.5f);
+        mOpenCvCameraView.setScaleY(1.5f);
+//        mOpenCvCameraView.setMaxFrameSize(1000,2000);
         mOpenCvCameraView.setVisibility(SurfaceView.VISIBLE);
         mOpenCvCameraView.setCvCameraViewListener(this);
 
         startTime = 0;
         currentTime = 1000;
         fpsTextView = (TextView) view.findViewById(R.id.fps_tv);
-        fpsTextView.setVisibility(View.GONE);
+        //fpsTextView.setVisibility(View.GONE);
         guide = new PillIntakeGuide((MainActivity)getActivity(), (RelativeLayout)view);
         File root = Environment.getExternalStorageDirectory();
 
@@ -235,8 +249,11 @@ public class VotCamera extends Fragment implements CameraBridgeViewBase.CvCamera
     @Override
     public Mat onCameraFrame(CameraBridgeViewBase.CvCameraViewFrame inputFrame) {
         colorImage = inputFrame.rgba();
+        Core.flip(colorImage, colorImage, 0); // Make mirror image
         grayscaleImage = inputFrame.gray();
         MatOfRect faces = new MatOfRect();
+        Log.d(TAG, "Vid frame height: " + mOpenCvCameraView.getHeight() + " width: " + mOpenCvCameraView.getWidth());
+
 
         // Model is trained on 90 sideways photos so need to rotate image back and forth after
         // to classify.
@@ -266,7 +283,6 @@ public class VotCamera extends Fragment implements CameraBridgeViewBase.CvCamera
 
             }
         });
-
 
         return colorImage;
     }
@@ -417,70 +433,70 @@ public class VotCamera extends Fragment implements CameraBridgeViewBase.CvCamera
         File lastVotFile = new File(videoFilePath);
         Uri lastVotUri = Uri.fromFile(lastVotFile); //Declare your url here.
         videoRef.getDownloadUrl().addOnCompleteListener(new OnCompleteListener<Uri>() {
-                                                            @Override
-                                                            public void onComplete(@NonNull Task<Uri> task) {
-                                                                boolean isOverwrite;
-                                                                if(task.isSuccessful()){
-                                                                    // Got the download URL for /me/profile.png'
-                                                                    // File Exists user has already uploaded a vot today, will overwrite.
-                                                                    // No need to add a reference as one already exists.
-                                                                    isOverwrite = true;
-                                                                }else{
+            @Override
+            public void onComplete(@NonNull Task<Uri> task) {
+                boolean isOverwrite;
+                if(task.isSuccessful()){
+                    // Got the download URL for /me/profile.png'
+                    // File Exists user has already uploaded a vot today, will overwrite.
+                    // No need to add a reference as one already exists.
+                    isOverwrite = true;
+                }else{
 
-                                                                    // File doesn't exist: This is the users first vot attempt today
-                                                                    // Video reference will need to be created.
-                                                                    isOverwrite = false;
-                                                                }
+                    // File doesn't exist: This is the users first vot attempt today
+                    // Video reference will need to be created.
+                    isOverwrite = false;
+                }
 
-                                                                UploadTask uploadTask = videoRef.putFile(lastVotUri);
-                                                                Log.d(TAG, "Uploading to : " + videoRef.getPath());
+                UploadTask uploadTask = videoRef.putFile(lastVotUri);
+                Log.d(TAG, "Uploading to : " + videoRef.getPath());
 
-                                                                // Register observers to listen for when the download is done or if it fails
-                                                                uploadTask.addOnFailureListener(new OnFailureListener() {
-                                                                    @Override
-                                                                    public void onFailure(@NonNull Exception exception) {
-                                                                        // Handle unsuccessful uploads
-                                                                        Log.d(TAG, "Video upload failed: " + exception);
-                                                                    }
-                                                                }).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
-                                                                    @Override
-                                                                    public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
-                                                                        // taskSnapshot.getMetadata() contains file metadata such as size, content-type, etc.
-                                                                        guide.setUploadProgress(100);
-                                                                        Log.d(TAG, "Uploaded your vot successfully" );
+                // Register observers to listen for when the download is done or if it fails
+                uploadTask.addOnFailureListener(new OnFailureListener() {
+                    @Override
+                    public void onFailure(@NonNull Exception exception) {
+                        // Handle unsuccessful uploads
+                        Log.d(TAG, "Video upload failed: " + exception);
+                    }
+                }).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
+                    @Override
+                    public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
+                        // taskSnapshot.getMetadata() contains file metadata such as size, content-type, etc.
+                        guide.setUploadProgress(100);
+                        Log.d(TAG, "Uploaded your vot successfully" );
 
-                                                                        Misc.toast("Uploaded your vot successfully", MainActivity.context);
-                                                                        Log.d(TAG, "Upload finished location: " + videoRef.getPath());
-                                                                        Log.d(TAG, "isOverwrite: " + isOverwrite);
+                        Misc.toast("Uploaded your vot successfully", MainActivity.context);
+                        Log.d(TAG, "Upload finished location: " + videoRef.getPath());
+                        Log.d(TAG, "isOverwrite: " + isOverwrite);
 
-                                                                        // if(!isOverwrite) FSVotVideoRef.addVideoReference(videoRef.getPath(), "TB Vot on " + genCurDateString(), timestamps);
-                                                                        //    ↑   Slightly changing this so that instead today's document is overwritten every time
-                                                                        //        because the time stamps and confidences will change for every video
-                                                                        String date = genCurDateString();
-                                                                        FSVotVideoRef.addVideoReference(date, videoRef.getPath(), "TB Vot on " + date, timestamps);
+                        // if(!isOverwrite) FSVotVideoRef.addVideoReference(videoRef.getPath(), "TB Vot on " + genCurDateString(), timestamps);
+                        //    ↑   Slightly changing this so that instead today's document is overwritten every time
+                        //        because the time stamps and confidences will change for every video
+                        String date = genCurDateString();
+                        FSVotVideoRef.addVideoReference(date, videoRef.getPath(), "TB Vot on " + date, timestamps);
 
-                                                                        String fileName = videoRef.getName();
-                                                                        File localFile = new File(Environment.getExternalStorageDirectory().getAbsolutePath()
-                                                                                + VOT_DIR + fileName);
-                                                                        // Copy file locally to final location from its temp location to avoid
-                                                                        // having to fetch it from Firebase using up bandwidth.
-                                                                        try {
-                                                                            Misc.copyFile(lastVotFile, localFile);
-                                                                        } catch(IOException e) {
-                                                                            Log.e(TAG, "Failed to copy latest vot locally" + e);
-                                                                        }
-                                                                    }
-                                                                }).addOnProgressListener(new OnProgressListener<UploadTask.TaskSnapshot>() {
-                                                                    @Override
-                                                                    public void onProgress(UploadTask.TaskSnapshot taskSnapshot) {
-                                                                        double progress = (100.0 * taskSnapshot.getBytesTransferred()) / taskSnapshot.getTotalByteCount();
-                                                                        Log.d(TAG, "Upload is " + progress + "% done");
-                                                                        guide.setUploadProgress((int)Math.round(progress));
-                                                                    }
-                                                                });
+                        String fileName = videoRef.getName();
+                        File localFile = new File(Environment.getExternalStorageDirectory().getAbsolutePath()
+                                + VOT_DIR + fileName);
+                        // Copy file locally to final location from its temp location to avoid
+                        // having to fetch it from Firebase using up bandwidth.
+                        try {
+                            Misc.copyFile(lastVotFile, localFile);
+                        } catch(IOException e) {
+                            Log.e(TAG, "Failed to copy latest vot locally" + e);
+                        }
+                    }
+                }).addOnProgressListener(new OnProgressListener<UploadTask.TaskSnapshot>() {
+                    @Override
+                    public void onProgress(UploadTask.TaskSnapshot taskSnapshot) {
+                        double progress = (100.0 * taskSnapshot.getBytesTransferred()) / taskSnapshot.getTotalByteCount();
+                        Log.d(TAG, "Upload is " + progress + "% done");
+                        guide.setUploadProgress((int)Math.round(progress));
+                    }
+                });
 
-                                                            }
-                                                        }
+            }
+        }
         );
 
 
