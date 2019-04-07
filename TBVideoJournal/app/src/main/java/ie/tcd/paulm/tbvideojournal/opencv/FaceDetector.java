@@ -6,6 +6,7 @@ import android.content.Context;
 import android.util.Log;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfRect;
+import org.opencv.core.Point;
 import org.opencv.core.Rect;
 import org.opencv.core.Scalar;
 import org.opencv.core.Size;
@@ -25,17 +26,21 @@ public class FaceDetector {
     private MatOfRect faces;
     private static CascadeClassifier cascadeClassifier;
     private static int absoluteFaceSize;
+    private float scaleFactor;
 
 
 
-    public FaceDetector(Context context, int height){
+    public FaceDetector(Context context, int height, float scaleFactor){
         // The faces will be ~ 20% of the height of the screen.
-        absoluteFaceSize = (int) (height * 0.2);
+        absoluteFaceSize = (int) (height * 0.4);
+        this.scaleFactor = scaleFactor;
         try {
             // Copy the resource into a temp file so OpenCV can load it
             InputStream is = context.getResources().openRawResource(R.raw.lbpcascade_frontalface);
             File cascadeDir = context.getDir("cascade", Context.MODE_PRIVATE);
             File mCascadeFile = new File(cascadeDir, "lbpcascade_frontalface.xml");
+            //File mCascadeFile = new File(cascadeDir, "haarcascade_frontalcatface_extended.xml");
+
             FileOutputStream os = new FileOutputStream(mCascadeFile);
 
             byte[] buffer = new byte[4096];
@@ -53,25 +58,43 @@ public class FaceDetector {
         }
 
     }
-    public Mat process(Mat colorImage, Mat grayscaleImageRot) {
+    public Rect[] process(Mat colorImage, Mat grayscaleImageRot) {
         // Use the classifier to detect faces
         faces = new MatOfRect();
         if (cascadeClassifier != null) {
-            cascadeClassifier.detectMultiScale(grayscaleImageRot, faces, 1.5, 2, 2,
-                    new Size(absoluteFaceSize, absoluteFaceSize), new Size());
+            // Got to feed in a square image
+            Log.d(TAG, "proccolorface: " + colorImage.width() + "h: " + colorImage.height());
+            Log.d(TAG, "procgreyface: " + grayscaleImageRot.width() + "h: " + grayscaleImageRot.height());
+            cascadeClassifier.detectMultiScale(grayscaleImageRot, faces, 1.05, 2, 2,
+                    new Size(absoluteFaceSize, absoluteFaceSize), new Size(absoluteFaceSize*2, absoluteFaceSize*2));// a different type of scale factor.
         }
 
-
+        Log.d(TAG, "Face image size width:" + colorImage.width() + "Height: " + colorImage.height());
         // If there are any faces found, draw a rectangle around it
         Rect[] facesArray = faces.toArray();
         for (int i = 0; i <facesArray.length; i++) {
-            Rect recRot = new Rect(facesArray[i].width- facesArray[i].y,facesArray[i].x,
-                    facesArray[i].height, facesArray[i].width);
-            Imgproc.rectangle(colorImage, recRot.br(), recRot.tl(), new Scalar(0, 255, 0, 255), 3);
+
+            // Added some scaling that to deal with the different camera resolution + scaleFactor to
+            // make it fill the screen feels kinda hacky and I don't know why one axis needs to be
+            // multiplied by the inverse of the scale factor but it just works.
+            // height/2 is to make the box just the mouth instead of the the full face.
+            Rect recRot = new Rect((colorImage.height()-facesArray[i].y-facesArray[i].height),(colorImage.width()-facesArray[i].x-facesArray[i].width),
+                    facesArray[i].height/2, facesArray[i].width);
+            facesArray[i] = recRot;
+            Log.d(TAG, "Face image x:" + facesArray[i].x + " y: " + facesArray[i].y);
+
 
         }
 
-        return colorImage;
+
+        return facesArray;
+    }
+
+    private int scalePosition(int position) {
+        return (int) Math.round(position * scaleFactor);
+    }
+    private int invScalePosition(int position) {
+        return (int) Math.round(position * 1/scaleFactor);
     }
 
     public int getConfidence() {
