@@ -1,5 +1,7 @@
 package ie.tcd.paulm.tbvideojournal.opencv;
 
+import com.google.android.gms.common.util.ArrayUtils;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -20,8 +22,10 @@ public class Confidence {
     public float getConfidence() {
         if(faceConfidences.size()==0) return 0; // Avoid possible div 0.
         float sum = 0;
-        for(Integer confidence : faceConfidences) {
-            sum += confidence.intValue();
+        faceConfidences.toArray(new Integer[faceConfidences.size()]);
+        // Copy List into array to get around possible concurrent exception.
+        for(int confidence : faceConfidences.toArray(new Integer[faceConfidences.size()])) {
+            sum += confidence;
         }
         return sum/faceConfidences.size();
 

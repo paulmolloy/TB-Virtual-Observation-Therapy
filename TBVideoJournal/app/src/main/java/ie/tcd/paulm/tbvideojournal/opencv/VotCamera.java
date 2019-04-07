@@ -94,6 +94,7 @@ public class VotCamera extends Fragment implements CameraBridgeViewBase.CvCamera
     private Confidence confidence;
     private enum Step {EMPTY, FACE, PILL, SWALLOW}
     private Step currentStep;
+    // Magic number scales to get rid of black bars without losing part of camera.
     private static final float scaleFactor = 1.5f;
 
 
@@ -127,15 +128,6 @@ public class VotCamera extends Fragment implements CameraBridgeViewBase.CvCamera
 
         mOpenCvCameraView = view.findViewById(R.id.camera_surface_view);
 
-        Log.d(TAG, "Vid height: " + mOpenCvCameraView.getHeight() + " width: " + mOpenCvCameraView.getWidth());
-        android.graphics.Rect r;
-//        mOpenCvCameraView.getW
-//        mOpenCvCameraView.getWindowVisibleDisplayFrame(r);
-        //Log.d(TAG, "Vid actual height: " + r.height() + "Vid actual width: "  + r.width());
-
-        Log.d(TAG, "Vid height: " + mOpenCvCameraView.getHeight() + " width: " + mOpenCvCameraView.getWidth());
-        mOpenCvCameraView.enableFpsMeter();
-        // Magic number
         mOpenCvCameraView.setScaleX(scaleFactor);
         mOpenCvCameraView.setScaleY(scaleFactor);
         mOpenCvCameraView.setMaxFrameSize(1000,2000);
@@ -145,7 +137,7 @@ public class VotCamera extends Fragment implements CameraBridgeViewBase.CvCamera
         startTime = 0;
         currentTime = 1000;
         fpsTextView = (TextView) view.findViewById(R.id.fps_tv);
-        //fpsTextView.setVisibility(View.GONE);
+        fpsTextView.setVisibility(View.GONE);
         guide = new PillIntakeGuide((MainActivity)getActivity(), (RelativeLayout)view);
         File root = Environment.getExternalStorageDirectory();
 
