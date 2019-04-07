@@ -95,7 +95,8 @@ public class VotCamera extends Fragment implements CameraBridgeViewBase.CvCamera
     private enum Step {EMPTY, FACE, PILL, SWALLOW}
     private Step currentStep;
     // Magic number scales to get rid of black bars without losing part of camera.
-    private static final float scaleFactor = 1.5f;
+    private static final float scaleFactor = 1.30f;
+    private boolean dontRecordDemo = true;
 
 
 
@@ -130,7 +131,7 @@ public class VotCamera extends Fragment implements CameraBridgeViewBase.CvCamera
 
         mOpenCvCameraView.setScaleX(scaleFactor);
         mOpenCvCameraView.setScaleY(scaleFactor);
-        mOpenCvCameraView.setMaxFrameSize(1000,2000);
+//        mOpenCvCameraView.setMaxFrameSize(1000,2000);
         mOpenCvCameraView.setVisibility(SurfaceView.VISIBLE);
         mOpenCvCameraView.setCvCameraViewListener(this);
 
@@ -151,11 +152,12 @@ public class VotCamera extends Fragment implements CameraBridgeViewBase.CvCamera
         dir.mkdirs();
 
         guide.onStepStarted((pill, step) -> {
-            if( !recording) {
+            if( !recording && !dontRecordDemo) {
                 prepareRecording();
                 startRecording();
                 recording = true;
             }
+            Log.d(TAG, "Step no:" + step);
             switch (step){
                 case 0:
                     currentStep = Step.PILL;
@@ -181,7 +183,7 @@ public class VotCamera extends Fragment implements CameraBridgeViewBase.CvCamera
             return stepConfidence;
         });
         guide.onAllPillsTaken(timestampsAndConfidences -> {
-            if(recording) {
+            if(recording && !dontRecordDemo) {
                 stopRecording();
                 recording = false;
                 String videoSavePath = Environment.getExternalStorageDirectory().getAbsolutePath()

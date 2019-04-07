@@ -73,17 +73,13 @@ public class FaceDetector {
         // If there are any faces found, draw a rectangle around it
         Rect[] facesArray = faces.toArray();
         for (int i = 0; i <facesArray.length; i++) {
-//            Imgproc.circle(colorImage, new Point(facesArray[i].x, facesArray[i].y), 1,  new Scalar(0, 255, 0, 255), 3);
-//            Rect recRotScaled = new Rect(scalePosition(facesArray[i].width)- scalePosition(facesArray[i].y),facesArray[i].x,
-//                    scalePosition(facesArray[i].height), scalePosition(facesArray[i].width));
-
-            //Imgproc.rectangle(colorImage, recRotScaled.br(), recRotScaled.tl(), new Scalar(0, 255, 255, 255), 3);
 
             // Added some scaling that to deal with the different camera resolution + scaleFactor to
             // make it fill the screen feels kinda hacky and I don't know why one axis needs to be
             // multiplied by the inverse of the scale factor but it just works.
-            Rect recRot = new Rect(scalePosition(colorImage.height()-facesArray[i].y-facesArray[i].height),invScalePosition(colorImage.width()-facesArray[i].x-facesArray[i].width),
-                    invScalePosition(facesArray[i].height), invScalePosition(facesArray[i].width));
+            // height/2 is to make the box just the mouth instead of the the full face.
+            Rect recRot = new Rect((colorImage.height()-facesArray[i].y-facesArray[i].height),(colorImage.width()-facesArray[i].x-facesArray[i].width),
+                    facesArray[i].height/2, facesArray[i].width);
             Imgproc.rectangle(colorImage, recRot.br(), recRot.tl(), new Scalar(0, 255, 0, 255), 3);
             Log.d(TAG, "Face image x:" + facesArray[i].x + " y: " + facesArray[i].y);
 
