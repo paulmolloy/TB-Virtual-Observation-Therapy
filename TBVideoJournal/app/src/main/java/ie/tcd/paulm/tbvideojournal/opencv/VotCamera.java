@@ -4,7 +4,6 @@ package ie.tcd.paulm.tbvideojournal.opencv;
 
 import android.content.Context;
 import android.content.Intent;
-import android.hardware.Camera;
 import android.hardware.display.DisplayManager;
 import android.hardware.display.VirtualDisplay;
 import android.media.MediaRecorder;
@@ -25,7 +24,6 @@ import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
