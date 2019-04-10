@@ -81,6 +81,7 @@
         android:layout_below="@id/prescriptions3"
         />
     <TextView
+        android:id="@+id/prescriptions5"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Pyrazinamide 100mg"

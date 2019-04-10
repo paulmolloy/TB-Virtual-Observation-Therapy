@@ -3,6 +3,7 @@ package ie.tcd.paulm.tbvideojournal.mainmenu;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
+import android.view.SurfaceView;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
@@ -21,12 +22,24 @@ import ie.tcd.paulm.tbvideojournal.firestore.FSPatient;
 public class TabProfileFragment extends Fragment {
 
     TextView patientName, nurseName;
+    TextView prescriptions1, prescriptions2,prescriptions3,prescriptions4,prescriptions5;
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_tab_profile, container, false);
 
         patientName = view.findViewById(R.id.MainMenu_name);
         nurseName = view.findViewById(R.id.MainMenu_nurse);
+        prescriptions1 = view.findViewById(R.id.prescriptions);
+        prescriptions2 = view.findViewById(R.id.prescriptions2);
+        prescriptions3 = view.findViewById(R.id.prescriptions3);
+        prescriptions4 = view.findViewById(R.id.prescriptions4);
+        prescriptions5 = view.findViewById(R.id.prescriptions5);
+        prescriptions1.setVisibility(SurfaceView.GONE);
+        prescriptions2.setVisibility(SurfaceView.GONE);
+        prescriptions3.setVisibility(SurfaceView.GONE);
+        prescriptions4.setVisibility(SurfaceView.GONE);
+        prescriptions5.setVisibility(SurfaceView.GONE);
+
 
         loadFirestoreStuff();
 
@@ -55,6 +68,12 @@ public class TabProfileFragment extends Fragment {
                             nurseData -> nurseName.setText("Your nurse is " + nurseData.name),
                             error -> nurseName.setText(error)
                     );
+
+                    prescriptions1.setVisibility(SurfaceView.VISIBLE);
+                    prescriptions2.setVisibility(SurfaceView.VISIBLE);
+                    prescriptions3.setVisibility(SurfaceView.VISIBLE);
+                    prescriptions4.setVisibility(SurfaceView.VISIBLE);
+                    prescriptions5.setVisibility(SurfaceView.VISIBLE);
 
                 },
                 error -> patientName.setText(error)
