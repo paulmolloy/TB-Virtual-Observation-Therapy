@@ -49,6 +49,8 @@ public class TabProfileFragment extends Fragment {
     private static final String VOT_DIR = "/tb-vot/";
     private static final String FIREBASE_VOT_DIR = "vot-videos/";
     private static final String TUTORIAL_FILE_NAME = "tutorial.mp4";
+    private static boolean shownTutorial = false;
+
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -130,7 +132,10 @@ public class TabProfileFragment extends Fragment {
                     prescriptions3.setVisibility(SurfaceView.VISIBLE);
                     prescriptions4.setVisibility(SurfaceView.VISIBLE);
                     prescriptions5.setVisibility(SurfaceView.VISIBLE);
-                    showTutorial();
+                    if (!shownTutorial){
+                        showTutorial();
+                        shownTutorial = true;
+                    }
 
                 },
                 error -> patientName.setText(error)
