@@ -44,5 +44,49 @@
         android:adjustViewBounds="true"
          />
 
+    <TextView
+        android:id="@+id/prescriptions"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="170dp"
+        android:text="Your prescription:"
+        android:layout_marginLeft="12dp"
+        android:textSize="20dp"
+        />
+    <TextView
+    android:id="@+id/prescriptions2"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:text="Isoniazid 100mg"
+    android:layout_marginLeft="19dp"
+    android:textSize="17dp"
+    android:layout_below="@id/prescriptions"
+    />
+    <TextView
+        android:id="@+id/prescriptions3"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Rifampin 200mg"
+        android:layout_marginLeft="19dp"
+        android:textSize="17dp"
+        android:layout_below="@id/prescriptions2"
+        />
+    <TextView
+        android:id="@+id/prescriptions4"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Ethambutol 100mg"
+        android:layout_marginLeft="19dp"
+        android:textSize="17dp"
+        android:layout_below="@id/prescriptions3"
+        />
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Pyrazinamide 100mg"
+        android:layout_marginLeft="19dp"
+        android:textSize="17dp"
+        android:layout_below="@id/prescriptions4"
+        />
 
 </RelativeLayout >
