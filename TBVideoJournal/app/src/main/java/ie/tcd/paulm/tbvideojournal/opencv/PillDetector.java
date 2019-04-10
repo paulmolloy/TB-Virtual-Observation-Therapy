@@ -67,7 +67,6 @@ public class PillDetector {
     }
     public Mat process(Rect[] facesArray, Mat colorImage) {
         Log.d(TAG, "processing pill detection");
-        Log.d(TAG, "Step pill detected: " + pillDetected);
         if (pillDetected) {
             // clone frame because original frame needed for display
             Mat frame = colorImage.clone();
