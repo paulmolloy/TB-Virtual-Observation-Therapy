@@ -160,7 +160,7 @@ public class TabDiaryFragment extends Fragment {
                 if(!localFile.exists()) {
                     // TODO(paulmolloy): do progress indicator.
                     Misc.toast("Vot " + item + " is not stored locally downloading...", getContext(), true);
-
+                    Log.d(TAG, "Downloading video: " + nameToFSPath.get(item));
                     vidRef.getFile(localFile).addOnSuccessListener(new OnSuccessListener<FileDownloadTask.TaskSnapshot>() {
                         @Override
                         public void onSuccess(FileDownloadTask.TaskSnapshot taskSnapshot) {

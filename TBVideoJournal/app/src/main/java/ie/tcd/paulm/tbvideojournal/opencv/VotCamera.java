@@ -17,13 +17,13 @@ import android.support.v4.app.Fragment;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.SurfaceView;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
@@ -67,6 +67,7 @@ public class VotCamera extends Fragment implements CameraBridgeViewBase.CvCamera
     private Mat mRgbaF;
     private Mat mRgbaT;
     private FaceDetector faceDetector;
+    private PillDetector pillDetector;
     // FPS Debugging.
     private int mFPS;
     private long startTime;
@@ -89,6 +90,11 @@ public class VotCamera extends Fragment implements CameraBridgeViewBase.CvCamera
     private int VIDEO_BITRATE = 512 * 2000;// 40000;
     private PillIntakeGuide guide;
     private Confidence confidence;
+    private enum Step {EMPTY, FACE, PILL, SWALLOW}
+    private Step currentStep;
+    // Magic number scales to get rid of black bars without losing part of camera.
+    private static final float scaleFactor = 1.30f;
+    private boolean dontRecordDemo = false;
 
 
 
@@ -120,13 +126,17 @@ public class VotCamera extends Fragment implements CameraBridgeViewBase.CvCamera
         getActivity().getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
         mOpenCvCameraView = view.findViewById(R.id.camera_surface_view);
+
+        mOpenCvCameraView.setScaleX(scaleFactor);
+        mOpenCvCameraView.setScaleY(scaleFactor);
+//        mOpenCvCameraView.setMaxFrameSize(1000,2000);
         mOpenCvCameraView.setVisibility(SurfaceView.VISIBLE);
         mOpenCvCameraView.setCvCameraViewListener(this);
 
         startTime = 0;
         currentTime = 1000;
         fpsTextView = (TextView) view.findViewById(R.id.fps_tv);
-
+        fpsTextView.setVisibility(View.GONE);
         guide = new PillIntakeGuide((MainActivity)getActivity(), (RelativeLayout)view);
         File root = Environment.getExternalStorageDirectory();
 
@@ -140,21 +150,46 @@ public class VotCamera extends Fragment implements CameraBridgeViewBase.CvCamera
         dir.mkdirs();
 
         guide.onStepStarted((pill, step) -> {
-            if( !recording) {
+            if( !recording && !dontRecordDemo) {
                 prepareRecording();
                 startRecording();
                 recording = true;
+            }
+            Log.d(TAG, "Step no:" + step);
+            switch (step){
+                case 0:
+                    currentStep = Step.PILL;
+                    pillDetector.resetPillDetector();
+                    Log.d(TAG, "Step started pill");
+                    break;
+                case 1:
+                    currentStep = Step.SWALLOW;
+                    Log.d(TAG, "Step started swallow");
+
+                    break;
+                case 2:
+                    currentStep = Step.EMPTY;
+                    Log.d(TAG, "Step started Empty");
+
+                    break;
+                case 3:
+                default:
+                    currentStep = Step.FACE;
+                    Log.d(TAG, "Step started face");
+
             }
             return Unit.INSTANCE;
         });
         guide.onStepCompleted((pill, step) -> {
             float stepConfidence = confidence.getConfidence();
+            Log.d(TAG, "Step confidence " + step + ": " + stepConfidence );
+            if (currentStep == Step.PILL) pillDetector.updatePillColorSample(colorImage);
             confidence.reset();
+
             return stepConfidence;
-            // ↑ This will eventually need to return the real confidence value that was just calculated for the current step
         });
         guide.onAllPillsTaken(timestampsAndConfidences -> {
-            if(recording) {
+            if(recording && !dontRecordDemo) {
                 stopRecording();
                 recording = false;
                 String videoSavePath = Environment.getExternalStorageDirectory().getAbsolutePath()
@@ -162,6 +197,17 @@ public class VotCamera extends Fragment implements CameraBridgeViewBase.CvCamera
                 saveVotFirebase(videoSavePath, timestampsAndConfidences);
             }
             return Unit.INSTANCE;
+        });
+
+        view.setOnTouchListener(new View.OnTouchListener() {
+            public boolean onTouch(View v, MotionEvent event) {
+
+                if(event.getAction() == MotionEvent.ACTION_DOWN){
+                    Log.d(TAG, "update sample");
+                    return pillDetector.updatePillColorSample(colorImage);
+                }
+                return true;
+            }
         });
 
 
@@ -182,7 +228,8 @@ public class VotCamera extends Fragment implements CameraBridgeViewBase.CvCamera
         mRgbaF = new Mat(height, width, CvType.CV_8UC4);
         mRgbaT = new Mat(width, width, CvType.CV_8UC4);
         grayscaleImageRot= new Mat(width, width, CvType.CV_8UC4);
-        faceDetector = new FaceDetector(getContext(), height);
+        faceDetector = new FaceDetector(getContext(), height, scaleFactor);
+        pillDetector = new PillDetector(getContext(), height, width);
     }
 
     @Override
@@ -202,8 +249,11 @@ public class VotCamera extends Fragment implements CameraBridgeViewBase.CvCamera
     @Override
     public Mat onCameraFrame(CameraBridgeViewBase.CvCameraViewFrame inputFrame) {
         colorImage = inputFrame.rgba();
+        Core.flip(colorImage, colorImage, 0); // Make mirror image
         grayscaleImage = inputFrame.gray();
         MatOfRect faces = new MatOfRect();
+        Log.d(TAG, "Vid frame height: " + mOpenCvCameraView.getHeight() + " width: " + mOpenCvCameraView.getWidth());
+
 
         // Model is trained on 90 sideways photos so need to rotate image back and forth after
         // to classify.
@@ -211,10 +261,20 @@ public class VotCamera extends Fragment implements CameraBridgeViewBase.CvCamera
         Core.transpose(grayscaleImage, mRgbaT);
         Imgproc.resize(mRgbaT, mRgbaF, mRgbaF.size(), 0,0, 0);
         Core.flip(mRgbaF, grayscaleImageRot,  0 ); // both vertical top bottom
+        Rect[] facesArray = faceDetector.process(colorImage, grayscaleImageRot);
+
 
         // Use the classifier to detect faces
-        colorImage = faceDetector.process(colorImage, grayscaleImageRot);
-        confidence.addFaceConfidence(faceDetector.getConfidence());
+        if(currentStep == Step.PILL || currentStep == Step.SWALLOW)
+            colorImage = pillDetector.process(facesArray, colorImage);
+            confidence.addPillConfidence(pillDetector.getConfidence());
+            confidence.setIsSwallowed(pillDetector.isSwallowed());
+        if(currentStep != Step.PILL) {
+            confidence.addFaceConfidence(faceDetector.getConfidence());
+        }
+        for(Rect face : facesArray)
+            Imgproc.rectangle(colorImage, face.br(), face.tl(), new Scalar(0, 255, 0, 255), 3);
+
 
         // Keep track of what the FPS is.
         getActivity().runOnUiThread(new Runnable() {
@@ -231,7 +291,6 @@ public class VotCamera extends Fragment implements CameraBridgeViewBase.CvCamera
             }
         });
 
-
         return colorImage;
     }
 
@@ -246,6 +305,7 @@ public class VotCamera extends Fragment implements CameraBridgeViewBase.CvCamera
             mLoaderCallback.onManagerConnected(LoaderCallbackInterface.SUCCESS);
         }
     }
+
 
     /* Checks if external storage is available for read and write */
     public boolean isExternalStorageWritable() {

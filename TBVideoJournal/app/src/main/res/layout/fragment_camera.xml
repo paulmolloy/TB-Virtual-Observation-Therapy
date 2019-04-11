@@ -5,9 +5,11 @@
     android:id="@+id/Camera_mainContainer">
 
     <org.opencv.android.JavaCameraView
+        android:id="@+id/camera_surface_view"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:id="@+id/camera_surface_view" />
+        android:layout_height="568dp"
+        android:layout_alignParentTop="true"
+        android:layout_marginTop="90dp" />
 
     <TextView
         android:id="@+id/fps_tv"
